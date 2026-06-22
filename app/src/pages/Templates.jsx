@@ -43,6 +43,33 @@ const TYPE_COLORS = {
   text:           { bg: '#F0F0EC', text: '#5A5A6E' },
 }
 
+// NFC-normalize + lowercase for local pre-check
+function _nfc(s) { return s.normalize('NFC').toLowerCase() }
+
+// Quick local search before hitting the API — returns 'exact', 'fuzzy', or null
+function localKeywordSearch(kw, ocrText) {
+  const kwN = _nfc(kw.trim())
+  const ocrN = _nfc(ocrText)
+  if (!kwN) return null
+  if (ocrN.includes(kwN)) return 'exact'
+  // fuzzy: all whitespace-separated words must appear within a 50-char window
+  const words = kwN.split(/\s+/).filter(Boolean)
+  if (words.length > 1) {
+    for (let i = 0; i < ocrN.length - 1; i++) {
+      const win = ocrN.slice(i, i + 50)
+      if (words.every(w => win.includes(w))) return 'fuzzy'
+    }
+  }
+  return null
+}
+
+// Show first N chars of a string as "U+XXXX" codepoints
+function codepoints(str, n = 5) {
+  return Array.from(str.trim().slice(0, n))
+    .map(c => `U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`)
+    .join(' ')
+}
+
 // ---------------------------------------------------------------------------
 // Single field row: keyword input + live preview + Advanced toggle
 // ---------------------------------------------------------------------------
@@ -77,14 +104,22 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
     debounceRef.current = setTimeout(async () => {
       if (!mountedRef.current) return
       setAnalyzing(true)
+      // NFC-normalize both strings before sending to backend
+      const kwNorm  = keywords.normalize('NFC').trim()
+      const ocrNorm = ocrText.normalize('NFC')
+      const localHit = localKeywordSearch(kwNorm, ocrNorm)
       try {
-        const res = await analyzeKeyword(keywords, ocrText)
+        const res = await analyzeKeyword(kwNorm, ocrNorm)
         if (!mountedRef.current) return
         const p = res && res.value ? res : null
-        setPreview(p || (res?.debug_patterns ? { _debug: res.debug_patterns } : null))
+        setPreview(
+          p ||
+          (res?.debug_patterns ? { _debug: res.debug_patterns, _localHit: localHit, _kw: kwNorm } : null) ||
+          (!localHit ? { _notFound: true, _kw: kwNorm } : null)
+        )
         onUpdateRef.current(fieldKey, { pattern: p?.pattern || null, keywords })
       } catch {
-        if (mountedRef.current) setPreview(null)
+        if (mountedRef.current) setPreview({ _notFound: true, _kw: kwNorm })
       } finally {
         if (mountedRef.current) setAnalyzing(false)
       }
@@ -165,7 +200,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
           {analyzing && (
             <span style={{ fontSize: 10.5, color: '#9A9AAC', fontStyle: 'italic' }}>Analyzing…</span>
           )}
-          {!analyzing && preview && !preview._debug && (
+          {!analyzing && preview && !preview._debug && !preview._notFound && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, color: preview.confidence === 'ok' ? '#0D5C44' : '#7A4100', lineHeight: 1 }}>
                 {preview.confidence === 'ok' ? '✓' : '?'}
@@ -179,18 +214,23 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
               <span style={{ fontSize: 11, color: '#16161F' }}>→ <strong>{preview.value}</strong></span>
             </div>
           )}
-          {!analyzing && preview?._debug && keywords.trim() && ocrText && (
+          {!analyzing && (preview?._debug || preview?._notFound) && keywords.trim() && ocrText && (
             <div>
-              <span style={{ fontSize: 10.5, color: '#8B1A1A' }}>⚠ Not found in OCR text — regex tried:</span>
-              {Object.entries(preview._debug).map(([kw, pat]) => (
+              <span style={{ fontSize: 10.5, color: '#8B1A1A' }}>
+                ⚠ Not found in OCR text
+                {preview._localHit && <span style={{ color: '#7A4100' }}> (local {preview._localHit} match — regex mismatch)</span>}
+              </span>
+              {preview._debug && Object.entries(preview._debug).map(([kw, pat]) => (
                 <div key={kw} style={{ ...mono, fontSize: 9, color: '#5A3A3A', marginTop: 2, wordBreak: 'break-all' }}>
                   {pat}
                 </div>
               ))}
+              {preview._kw && (
+                <div style={{ ...mono, fontSize: 9, color: '#9A5A5A', marginTop: 3 }}>
+                  chars: {codepoints(preview._kw)}
+                </div>
+              )}
             </div>
-          )}
-          {!analyzing && !preview && keywords.trim() && ocrText && (
-            <span style={{ fontSize: 10.5, color: '#8B1A1A' }}>⚠ Not found in OCR text</span>
           )}
           {!analyzing && !ocrText && (
             <span style={{ fontSize: 10.5, color: '#C0C0CC' }}>Upload an invoice to see preview</span>
@@ -593,8 +633,8 @@ function TemplateCard({ template, onEdit, onDelete }) {
                       🔑 {hint}
                     </div>
                   )}
-                  <div style={{ ...mono, fontSize: 11, color: val ? '#16161F' : '#C4C4D0', wordBreak: 'break-all' }}>
-                    {val || '— heuristic fallback —'}
+                  <div style={{ ...mono, fontSize: 11, color: val ? '#16161F' : hint ? '#1A1A6E' : '#C4C4D0', wordBreak: 'break-all' }}>
+                    {val || (hint ? '— via keyword hint —' : '— heuristic fallback —')}
                   </div>
                 </div>
               )

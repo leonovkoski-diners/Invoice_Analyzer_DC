@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 import uuid
 from decimal import Decimal
 from pathlib import Path
@@ -202,11 +203,35 @@ def apply_template(template: Dict, full_text: str, lines: List[str]) -> Dict[str
     except Exception as exc:
         logger.warning("invoice_date extraction failed in template: %s", exc)
 
-    # Total — template pattern first, then full heuristic scan
+    # Total — template regex first, keyword hint second, heuristic last
     total: Optional[Decimal] = None
+    keyword_hints = template.get("keyword_hints", {})
     try:
         total_str = _regex_extract(patterns.get("total"), full_text)
-        total = parse_amount(total_str)
+        if not total_str and keyword_hints.get("total"):
+            kw_norm = unicodedata.normalize('NFC', keyword_hints["total"].strip())
+            ocr_norm = unicodedata.normalize('NFC', full_text)
+            # Try 1: lookalike-aware regex
+            m = re.search(_keyword_to_regex(kw_norm) + r'\s*([\d.,]+)', ocr_norm, re.IGNORECASE)
+            if not m:
+                # Try 2: literal match (handles case where keyword chars exactly match OCR)
+                m = re.search(re.escape(kw_norm) + r'\s*([\d.,]+)', ocr_norm, re.IGNORECASE)
+            if not m:
+                # Try 3: scan each line for the keyword string, grab first number on that line
+                kw_lower = kw_norm.lower()
+                for line in ocr_norm.splitlines():
+                    if kw_lower in line.lower():
+                        after = line[line.lower().index(kw_lower) + len(kw_norm):]
+                        nm = re.search(r'([\d][.,\d]+)', after)
+                        if nm:
+                            m = nm
+                        break
+            if m:
+                total_str = m.group(1)
+                logger.info("total via keyword hint '%s': %s", keyword_hints["total"], total_str)
+            else:
+                logger.warning("keyword hint '%s' not found in OCR text", keyword_hints["total"])
+        total = parse_amount(total_str) if total_str else None
     except Exception as exc:
         logger.warning("total pattern extraction failed in template: %s", exc)
 
@@ -365,6 +390,8 @@ def _analyze_single_keyword(kw: str, ocr_text: str) -> Optional[Dict[str, Any]]:
     words until a classifiable value is found, and return the generated regex.
     Returns None if the keyword is not found or no value follows.
     """
+    kw = unicodedata.normalize('NFC', kw.strip())
+    ocr_text = unicodedata.normalize('NFC', ocr_text)
     try:
         m = re.search(_keyword_to_regex(kw), ocr_text, re.IGNORECASE)
     except re.error:
@@ -463,6 +490,8 @@ def analyze_keyword_for_field(keywords_raw: str, ocr_text: str) -> Dict[str, Any
     if not keywords_raw or not ocr_text:
         return _EMPTY
 
+    keywords_raw = unicodedata.normalize('NFC', keywords_raw)
+    ocr_text = unicodedata.normalize('NFC', ocr_text)
     keywords = [k.strip() for k in keywords_raw.split(',') if k.strip()]
     if not keywords:
         return _EMPTY

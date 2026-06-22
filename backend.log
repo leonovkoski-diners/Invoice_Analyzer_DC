@@ -10773,3 +10773,180 @@ INFO:     127.0.0.1:55491 - "GET /api/templates HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55491 - "GET /api/templates HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50951 - "GET /api/templates HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50951 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54288 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54288 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55558 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55558 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55558 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55558 - "GET /api/templates HTTP/1.1" 200 OK
+2026-06-22 14:54:03,264 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 14:54:03,265 INFO pipeline.ocr - Rasterizing PDF: tmppkn3s68q.pdf at 200 DPI...
+2026-06-22 14:54:05,518 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 14:54:45,658 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 14:54:45,662 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+INFO:     127.0.0.1:60027 - "POST /api/ocr-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57810 - "OPTIONS /api/templates HTTP/1.1" 200 OK
+2026-06-22 14:59:53,784 INFO pipeline.templates - Saved 4 templates
+INFO:     127.0.0.1:57810 - "POST /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57810 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57810 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:00:03,797 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:00:03,817 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:00:03,817 INFO pipeline.ocr - Rasterizing PDF: tmpedao73du.pdf at 200 DPI...
+2026-06-22 15:00:05,051 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+INFO:     127.0.0.1:50613 - "GET /api/health HTTP/1.1" 200 OK
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:00:42,454 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:00:42,458 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:00:42,463 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:00:42,466 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:00:42,466 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:00:42,497 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:00:42,497 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:00:42,503 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:00:42,507 INFO pipeline.pipeline - [100%] Complete in 38.7s (template: be8f535a)
+2026-06-22 15:00:42,508 INFO pipeline.pipeline - Complete — clean: tmpedao73du.pdf
+INFO:     127.0.0.1:58142 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55699 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55699 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55699 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55699 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57446 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:10:15,276 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:10:15,313 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:10:15,314 INFO pipeline.ocr - Rasterizing PDF: tmpegm2o90r.pdf at 200 DPI...
+2026-06-22 15:10:16,554 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:10:53,916 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:10:53,921 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:10:53,925 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:10:53,929 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:10:53,929 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:10:53,938 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:10:53,938 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:10:53,941 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:10:53,944 INFO pipeline.pipeline - [100%] Complete in 38.7s (template: be8f535a)
+2026-06-22 15:10:53,944 INFO pipeline.pipeline - Complete — clean: tmpegm2o90r.pdf
+INFO:     127.0.0.1:57483 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52950 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52950 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52950 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52950 - "GET /api/templates HTTP/1.1" 200 OK
+2026-06-22 15:20:08,180 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:20:08,181 INFO pipeline.ocr - Rasterizing PDF: tmpj_bqqni4.pdf at 200 DPI...
+2026-06-22 15:20:09,338 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:20:43,968 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:20:43,971 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+INFO:     127.0.0.1:55464 - "POST /api/ocr-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "OPTIONS /api/templates HTTP/1.1" 200 OK
+2026-06-22 15:21:30,450 INFO pipeline.templates - Saved 4 templates
+INFO:     127.0.0.1:57850 - "POST /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52585 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:21:49,779 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:21:49,791 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:21:49,791 INFO pipeline.ocr - Rasterizing PDF: tmp5tm9dvv5.pdf at 200 DPI...
+2026-06-22 15:21:50,892 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:22:26,948 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:22:26,952 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:22:26,955 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:22:26,958 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:22:26,958 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:22:26,963 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:22:26,964 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:22:26,964 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:22:26,965 INFO pipeline.pipeline - [100%] Complete in 37.2s (template: be8f535a)
+2026-06-22 15:22:26,965 INFO pipeline.pipeline - Complete — clean: tmp5tm9dvv5.pdf
+INFO:     127.0.0.1:55490 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59487 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59487 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52600 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52600 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61092 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:25:17,731 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:25:17,740 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:25:17,741 INFO pipeline.ocr - Rasterizing PDF: tmpe2ofbtvu.pdf at 200 DPI...
+2026-06-22 15:25:18,885 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:25:54,999 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:25:55,002 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:25:55,006 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:25:55,015 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:25:55,015 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:25:55,019 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:25:55,019 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:25:55,019 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:25:55,020 INFO pipeline.pipeline - [100%] Complete in 37.3s (template: be8f535a)
+2026-06-22 15:25:55,020 INFO pipeline.pipeline - Complete — clean: tmpe2ofbtvu.pdf
+INFO:     127.0.0.1:60359 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50134 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50134 - "GET /api/templates HTTP/1.1" 200 OK
+2026-06-22 15:27:30,771 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:27:30,771 INFO pipeline.ocr - Rasterizing PDF: tmpimw_4ivr.pdf at 200 DPI...
+2026-06-22 15:27:31,576 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:28:07,854 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:28:07,857 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+INFO:     127.0.0.1:61411 - "POST /api/ocr-text HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57813 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57813 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52911 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52911 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52911 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52911 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63650 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:37:31,262 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:37:31,274 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:37:31,275 INFO pipeline.ocr - Rasterizing PDF: tmpv6gc27dy.pdf at 200 DPI...
+2026-06-22 15:37:32,453 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:38:09,498 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:38:09,501 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:38:09,504 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:38:09,507 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:38:09,507 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:38:09,514 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:38:09,515 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:38:09,517 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:38:09,518 INFO pipeline.pipeline - [100%] Complete in 38.3s (template: be8f535a)
+2026-06-22 15:38:09,519 INFO pipeline.pipeline - Complete — clean: tmpv6gc27dy.pdf
+INFO:     127.0.0.1:52288 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62865 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62865 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62865 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62865 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63027 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63027 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63027 - "GET /api/health HTTP/1.1" 200 OK
+2026-06-22 15:38:42,703 INFO pipeline.pipeline - [ 15%] Running OCR extraction...
+2026-06-22 15:38:42,712 INFO pipeline.ocr - Using poppler at: C:\poppler\poppler-26.02.0\Library\bin
+2026-06-22 15:38:42,712 INFO pipeline.ocr - Rasterizing PDF: tmppbxry17c.pdf at 200 DPI...
+2026-06-22 15:38:43,816 INFO pipeline.ocr - PDF rasterized: 1 page(s)
+C:\Users\leon\Documents\invoice_analyzer_DC\.venv\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)
+2026-06-22 15:39:18,590 INFO pipeline.ocr - Page 1: OCR extracted 26 visual lines from 54 segments
+2026-06-22 15:39:18,594 INFO pipeline.ocr - OCR complete: 1 page(s), 702 chars
+2026-06-22 15:39:18,597 INFO pipeline.pipeline - [ 40%] Matching vendor template...
+2026-06-22 15:39:18,599 INFO pipeline.templates - Template matched: 'TELIT DOO' (be8f535a)
+2026-06-22 15:39:18,600 INFO pipeline.pipeline - [ 60%] Extracting invoice fields...
+2026-06-22 15:39:18,603 INFO pipeline.templates - Template extraction (TELIT DOO): vendor='TELIT DOO', inv_no='20/25', total=3900.00
+2026-06-22 15:39:18,603 INFO pipeline.pipeline - [ 75%] Validating schema...
+2026-06-22 15:39:18,603 INFO pipeline.pipeline - [ 88%] Verifying arithmetic and dates...
+2026-06-22 15:39:18,604 INFO pipeline.pipeline - [100%] Complete in 35.9s (template: be8f535a)
+2026-06-22 15:39:18,604 INFO pipeline.pipeline - Complete — clean: tmppbxry17c.pdf
+INFO:     127.0.0.1:56179 - "POST /api/extract HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51541 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51541 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56030 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56030 - "GET /api/templates HTTP/1.1" 200 OK
