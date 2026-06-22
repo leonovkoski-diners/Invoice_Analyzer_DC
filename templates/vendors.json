@@ -1,0 +1,80 @@
+[
+  {
+    "display_name": "Адвокатско друштво Чукий и Марков",
+    "keywords": [
+      "Адвокатско друштво Чукий и Марков",
+      "Advokatsko dru{tvo ^uki} i Markov"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Фактура\\ 6р\\.\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "ВКУПЕН\\ ИЗНОС\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "subtotal": "03/2024г\\ ,\\ \\ да\\ уплатите\\ износ\\ од\\s*[:\\-]?\\s*([\\d.,]+)",
+      "invoice_date": "Скопје;\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "id": "8a3110ee"
+  },
+  {
+    "display_name": "НИКОБ Обезбедување",
+    "keywords": [
+      "НИКОБ Обезбедување",
+      "Nikob Obezbeduvawe"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "о:\\ ФД\\ ДИНЕРС\\ КЛУБ\\ Интернационал\\ Мак\\ АД\\ Скопје\\ Број\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "ДДВ\\ Израмнување\\ \\-0,40\\ Валута\\ MKD\\ Вкупно\\ за\\ плакање\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "лок\\ 5\\ Парк\\ РезиденсСкопје;\\ Датум\\ Датум\\ на\\ промет\\ 0\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "due_date": "Даночен\\ број\\ \\ 4030992100592\\ Рок\\ на\\ плакање\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "id": "e32909eb"
+  },
+  {
+    "id": "be8f535a",
+    "display_name": "TELIT DOO",
+    "currency": "MKD",
+    "keywords": [
+      "TELIT DOO",
+      "Telit Doo"
+    ],
+    "patterns": {
+      "vendor_name": null,
+      "vendor_vat_id": null,
+      "invoice_number": "Факmура\\ број:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "invoice_date": null,
+      "due_date": null,
+      "subtotal": null,
+      "tax_rate": null,
+      "tax_amount": null,
+      "total": null,
+      "payment_reference": null
+    },
+    "keyword_hints": {
+      "total": "ВКУПНО CЕ :"
+    }
+  },
+  {
+    "id": "dc1fae17",
+    "display_name": "KaSis",
+    "currency": "MKD",
+    "keywords": [
+      "KaSis",
+      "Kasis"
+    ],
+    "patterns": {
+      "vendor_name": null,
+      "vendor_vat_id": null,
+      "invoice_number": "Комплекс\\ Парк\\ Резиденс\\ брај\\ на\\ фактура\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "invoice_date": "Анекс\\ 6р\\.1\\ ca\\ архбр\\ \\ за\\ КаСис\\ 03\\-1504/1\\ од\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "due_date": null,
+      "subtotal": null,
+      "tax_rate": null,
+      "tax_amount": null,
+      "total": null,
+      "payment_reference": null
+    },
+    "keyword_hints": {}
+  }
+]

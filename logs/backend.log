@@ -1,0 +1,16 @@
+INFO:     Started server process [26056]
+INFO:     Waiting for application startup.
+2026-06-19 14:57:01,785 INFO api.main - Warming up EasyOCR reader (downloads mk+en models if needed)...
+2026-06-19 14:57:14,778 INFO pipeline.ocr - Initializing EasyOCR reader (bg + rs_cyrillic + en) — may download models on first run...
+2026-06-19 14:57:19,061 INFO pipeline.ocr - EasyOCR reader ready.
+2026-06-19 14:57:19,062 INFO api.main - EasyOCR reader ready.
+2026-06-19 14:57:19,062 INFO api.main - Loading Komitent and Konten Plan lookup tables...
+2026-06-19 14:57:19,143 INFO pipeline.lookup - KomitentLookup: loaded 2017 entries from Коминтенти.xls
+2026-06-19 14:57:19,176 INFO pipeline.lookup - KontenPlanLookup: loaded 2612 accounts from Контен план.xls
+2026-06-19 14:57:19,176 INFO api.main - Lookup tables ready.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56405 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56407 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57582 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57585 - "GET /api/health HTTP/1.1" 200 OK
