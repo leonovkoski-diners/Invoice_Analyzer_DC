@@ -9,30 +9,18 @@ const sectionLabel = { ...mono, fontSize: 9.5, letterSpacing: '0.14em', textTran
 const card = { background: '#fff', border: '1px solid #E8E8E2', borderRadius: 10, overflow: 'hidden' }
 
 const PATTERN_FIELDS = [
-  { key: 'vendor_name',       label: 'Назив на добавувачот' },
-  { key: 'vendor_vat_id',     label: 'EDБ број' },
-  { key: 'invoice_number',    label: 'Број на фактура' },
-  { key: 'invoice_date',      label: 'Датум на фактура' },
-  { key: 'due_date',          label: 'Рок на плаќање' },
-  { key: 'subtotal',          label: 'Основа (нето)' },
-  { key: 'tax_rate',          label: 'ДДВ стапка %' },
-  { key: 'tax_amount',        label: 'Износ на ДДВ' },
-  { key: 'total',             label: 'Вкупно (бруто)' },
-  { key: 'payment_reference', label: 'Референца за плаќање' },
+  { key: 'vendor_name',    label: 'Назив на добавувачот' },
+  { key: 'invoice_number', label: 'Број на фактура' },
+  { key: 'invoice_date',   label: 'Датум на фактура' },
+  { key: 'total',          label: 'Вкупно (бруто)' },
 ]
 
 // Example keywords shown as placeholder text per field
 const FIELD_PLACEHOLDER = {
-  vendor_name:       'Фирма, ДОО',
-  vendor_vat_id:     'МК, ЕДБ',
-  invoice_number:    'ФАКТУРА, број',
-  invoice_date:      'Датум',
-  due_date:          'Рок, валута',
-  subtotal:          'Основа, без ДДВ',
-  tax_rate:          'ДДВ %',
-  tax_amount:        'ДДВ износ',
-  total:             'Вкупно, За наплата',
-  payment_reference: 'Референца',
+  vendor_name:    'Фирма, ДОО',
+  invoice_number: 'ФАКТУРА, број',
+  invoice_date:   'Датум',
+  total:          'Вкупно, За наплата',
 }
 
 const TYPE_COLORS = {

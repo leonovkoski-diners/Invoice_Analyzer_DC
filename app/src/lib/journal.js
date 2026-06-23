@@ -172,7 +172,11 @@ function isRoundingLine(description) {
 //   - For each regular line: gross = net × (1 + vatRate/100); exempt lines: gross = net.
 //   - No separate VAT row — VAT is baked into the per-line gross amounts.
 //   - Supplier payable credit (2200) = sum of all debit entries (balancing).
-export function generateJournal(invoice) {
+//
+// suggestedKonto: when provided (from the backend embedding model), it overrides
+// the local keyword matching for expense debit lines. Falls back to assignExpenseKonto
+// if null/undefined (e.g. seed data, offline mode).
+export function generateJournal(invoice, suggestedKonto = null) {
   const entries = []
   const vendorText = invoice.vendor || ''
   const total      = round2(invoice.total ?? 0)
@@ -180,7 +184,7 @@ export function generateJournal(invoice) {
 
   if (lines.length === 0) {
     // No line items at all — single entry using the invoice gross total
-    const konto = assignExpenseKonto(vendorText)
+    const konto = suggestedKonto || assignExpenseKonto(vendorText)
     entries.push({ id: rowId(), konto, opis: vendorText || 'Expense', debit: round0(total), credit: 0 })
     entries.push({ id: rowId(), konto: PAYABLE_KONTO, opis: 'Обврска спрема добавувач', debit: 0, credit: round0(total) })
     return entries
@@ -238,7 +242,7 @@ export function generateJournal(invoice) {
     const amt = grossAmounts[i]
     if (Math.abs(amt) < EPSILON) continue
     const desc  = (li.description || '').trim() || vendorText
-    const konto = assignExpenseKonto(desc + ' ' + vendorText)
+    const konto = suggestedKonto || assignExpenseKonto(desc + ' ' + vendorText)
     if (amt >= 0) {
       entries.push({ id: rowId(), konto, opis: desc, debit: round0(amt), credit: 0 })
     } else {

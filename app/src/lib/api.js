@@ -120,6 +120,23 @@ export async function lookupKomitent({ sifra, name } = {}) {
   return data.match || null
 }
 
+// ---------------------------------------------------------------------------
+// Konto learning
+// ---------------------------------------------------------------------------
+
+// Save a human-confirmed konto for this invoice's OCR text.
+// Called automatically on approval. Fire-and-forget — failures are silent
+// so the approval flow is never blocked by a learning error.
+export async function saveKontoCorrection({ ocr_text, konto, komitent_id } = {}) {
+  const res = await fetch(`${API_BASE}/api/konto-correction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ocr_text, konto, komitent_id: komitent_id ?? null }),
+  })
+  if (!res.ok) throw new Error(`Konto correction save failed (${res.status})`)
+  return res.json() // { saved, konto, total_corrections }
+}
+
 export async function deleteTemplate(id) {
   const res = await fetch(`${API_BASE}/api/templates/${encodeURIComponent(id)}`, {
     method: 'DELETE',

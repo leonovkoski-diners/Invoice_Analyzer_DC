@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { fmtMoney, fmtDate } from '../lib/format'
 import { parseBackendFlags } from '../lib/invoice'
 import { generateJournal } from '../lib/journal'
-import { extractDocument, setTemplateDefault as setTemplateDefaultApi } from '../lib/api'
+import { extractDocument, setTemplateDefault as setTemplateDefaultApi, saveKontoCorrection } from '../lib/api'
 import { exportToHelixK, exportBatchToHelixK } from '../lib/helixk'
 import { AppContext } from './appContext'
 
@@ -25,7 +25,9 @@ function decorate(inv, extractionMethod) {
     extra: inv.extra ?? [],
     ...inv,
   }
-  return { ...withMeta, journal: withMeta.journal ?? generateJournal(withMeta) }
+  // kontoSuggestion (from backend embedding model) is passed to generateJournal
+  // so expense debit lines use the model's konto instead of local keyword rules.
+  return { ...withMeta, journal: withMeta.journal ?? generateJournal(withMeta, withMeta.kontoSuggestion ?? null) }
 }
 
 // Map the FastAPI extraction response onto our invoice shape. Minimal fields only.
@@ -63,6 +65,9 @@ function invoiceFromExtraction(resp, fileMeta) {
     templateName: resp.template_name || null,
     templateDefaults: resp.template_defaults || {},
     ocrText: resp.ocr_text || '',
+    kontoSuggestion: resp.suggested_konto || null,
+    kontoMethod: resp.konto_method || null,
+    kontoConfidence: resp.konto_confidence ?? null,
   }
   return decorate(base, resp.extraction_method || 'local_ocr')
 }
@@ -114,6 +119,20 @@ export function AppProvider({ children }) {
       }
       setInvoices((list) => list.map((i) => (i.id === id ? { ...i, status: 'Approved' } : i)))
       pushToast('ok', 'Одобрена', inv.number + ' прокнижена')
+
+      // Send the final expense konto back to the backend for learning.
+      // Fire-and-forget: never block the approval on a learning error.
+      if (inv.ocrText) {
+        const expenseLine = (inv.journal || []).find((e) => e.debit > 0 && e.konto && e.konto !== '2200')
+        if (expenseLine?.konto) {
+          saveKontoCorrection({
+            ocr_text: inv.ocrText,
+            konto: expenseLine.konto,
+            komitent_id: inv.komitentId || null,
+          }).catch(() => {})
+        }
+      }
+
       return true
     },
     [invoices, pushToast],

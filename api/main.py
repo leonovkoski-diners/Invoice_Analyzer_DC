@@ -70,6 +70,8 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning(f"Lookup table init failed (will retry on first use): {exc}")
 
+    logger.info("KontoLearner will initialise on first extract request (lazy — model is ~470 MB).")
+
     yield
     logger.info("Service shutting down.")
 
@@ -176,6 +178,22 @@ async def extract(file: UploadFile = File(...)) -> JSONResponse:
             template_name = None
             template_defaults = {}
 
+        # Konto suggestion — embedding-based, with keyword rules as fallback.
+        # Runs in executor because the sentence-transformers model is CPU-bound
+        # and loads lazily on first call.
+        suggested_konto = "4499"
+        konto_method = "default"
+        konto_confidence = 0.0
+        try:
+            from pipeline.lookup import get_konto_learner, get_konten_plan_lookup
+            learner = get_konto_learner()
+            keyword_fn = get_konten_plan_lookup().suggest_konto
+            suggested_konto, konto_method, konto_confidence = await loop.run_in_executor(
+                None, learner.suggest, result.ocr_text, keyword_fn
+            )
+        except Exception as exc:
+            logger.warning("Konto suggestion failed (will use default 4499): %s", exc)
+
         return JSONResponse(
             content={
                 "record": serialize_record(result.record),
@@ -188,6 +206,9 @@ async def extract(file: UploadFile = File(...)) -> JSONResponse:
                 "template_defaults": template_defaults,
                 "ocr_text": result.ocr_text,
                 "file_name": file.filename,
+                "suggested_konto": suggested_konto,
+                "konto_method": konto_method,
+                "konto_confidence": round(konto_confidence, 3),
             }
         )
     finally:
@@ -354,6 +375,37 @@ def set_template_default(template_id: str, body: dict = Body(...)) -> dict[str, 
     templates[idx] = tmpl
     save_templates(templates)
     return {"template": tmpl}
+
+
+@app.post("/api/konto-correction")
+async def save_konto_correction(body: dict = Body(...)) -> dict[str, Any]:
+    """
+    Record a human-confirmed konto for a given invoice's OCR text.
+    Called automatically when an accountant approves an invoice — the final
+    konto from the journal is sent here so the system learns from the correction.
+
+    Body: { ocr_text: str, konto: str, komitent_id?: str }
+    """
+    ocr_text = (body.get("ocr_text") or "").strip()
+    konto = (body.get("konto") or "").strip()
+    komitent_id = body.get("komitent_id") or None
+
+    if not ocr_text or not konto:
+        raise HTTPException(status_code=422, detail="ocr_text and konto are required")
+
+    try:
+        from pipeline.lookup import get_konto_learner
+        learner = get_konto_learner()
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, learner.learn, ocr_text, konto, komitent_id)
+        return {
+            "saved": True,
+            "konto": konto,
+            "total_corrections": learner.correction_count(),
+        }
+    except Exception as exc:
+        logger.warning("konto-correction save failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.post("/api/templates/save-from-invoice")

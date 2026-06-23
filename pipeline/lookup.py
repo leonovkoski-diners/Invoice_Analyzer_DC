@@ -358,6 +358,7 @@ class KontenPlanLookup:
 
 _komitent_lookup: Optional[KomitentLookup] = None
 _konten_plan_lookup: Optional[KontenPlanLookup] = None
+_konto_learner = None  # type: ignore[var-annotated]
 
 
 def get_komitent_lookup() -> KomitentLookup:
@@ -374,7 +375,20 @@ def get_konten_plan_lookup() -> KontenPlanLookup:
     return _konten_plan_lookup
 
 
+def get_konto_learner():
+    """Return the singleton KontoLearner, initialised with the konten plan accounts."""
+    global _konto_learner
+    if _konto_learner is None:
+        from pipeline.konto_learner import KontoLearner
+        konten_plan = get_konten_plan_lookup()
+        _konto_learner = KontoLearner(konten_plan.accounts)
+    return _konto_learner
+
+
 def init_lookups() -> None:
-    """Pre-warm both lookup tables. Call at app startup."""
+    """Pre-warm komitent and konten plan tables. Call at app startup.
+    KontoLearner is intentionally left lazy — the sentence-transformers model
+    (~470 MB) is loaded on the first extract request, not at startup.
+    """
     get_komitent_lookup()
     get_konten_plan_lookup()
