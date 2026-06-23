@@ -476,91 +476,6 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
 }
 
 // ---------------------------------------------------------------------------
-// OCR debug helper (standalone, unchanged)
-// ---------------------------------------------------------------------------
-function OcrTestPanel() {
-  const [file, setFile] = useState(null)
-  const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const inputRef = useRef()
-
-  async function runOcr() {
-    if (!file) return
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await getOcrText(file)
-      setResult(data.full_text)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div style={{ ...card, padding: 20 }}>
-      <div style={{ ...sectionLabel, marginBottom: 12 }}>OCR екстрактор — тестирај ги regex шаблоните</div>
-      <p style={{ fontSize: 12.5, color: '#5A5A6E', marginTop: 0, marginBottom: 14, lineHeight: 1.6 }}>
-        Прикачи фактура PDF за да го видиш суровиот OCR текст. Копирај вредности оттука за градење regex шаблони погоре.
-      </p>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.png,.jpg,.jpeg"
-          style={{ display: 'none' }}
-          onChange={(e) => setFile(e.target.files[0] || null)}
-        />
-        <button
-          onClick={() => inputRef.current.click()}
-          style={{ border: '1px solid #E2E2DC', background: '#fff', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, color: '#5A5A6E', fontWeight: 600, cursor: 'pointer' }}
-        >
-          {file ? file.name : 'Избери датотека…'}
-        </button>
-        {file && (
-          <button
-            onClick={runOcr}
-            disabled={loading}
-            style={{ background: loading ? '#8A8ABA' : '#1A1A6E', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 16px', fontSize: 12.5, fontWeight: 600, cursor: loading ? 'default' : 'pointer' }}
-          >
-            {loading ? 'Се извлекува…' : 'Извлечи OCR текст'}
-          </button>
-        )}
-      </div>
-      {error && (
-        <div style={{ marginTop: 12, color: '#8B1A1A', fontSize: 12.5 }}>{error}</div>
-      )}
-      {result && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ ...sectionLabel, marginBottom: 6 }}>Суров OCR излез</div>
-          <pre
-            style={{
-              background: '#F7F7F5',
-              border: '1px solid #E8E8E2',
-              borderRadius: 7,
-              padding: '12px 14px',
-              fontSize: 11.5,
-              lineHeight: 1.7,
-              maxHeight: 400,
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              margin: 0,
-              color: '#16161F',
-              ...mono,
-            }}
-          >
-            {result}
-          </pre>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Template card
 // ---------------------------------------------------------------------------
 function TemplateCard({ template, onEdit, onDelete }) {
@@ -786,13 +701,7 @@ export default function Templates() {
         </div>
       )}
 
-      {/* OCR debug tool */}
-      {!loading && !error && (
-        <div style={{ marginTop: 32 }}>
-          <div style={{ ...sectionLabel, marginBottom: 14 }}>Алатки за развивачи</div>
-          <OcrTestPanel />
-        </div>
-      )}
+
     </div>
   )
 }

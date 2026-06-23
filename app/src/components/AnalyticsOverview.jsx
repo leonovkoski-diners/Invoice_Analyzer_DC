@@ -24,8 +24,34 @@ export default function AnalyticsOverview() {
 
   const data = useMemo(() => {
     const relevant = invoices.filter((i) => i.status !== 'Rejected')
-    const netMKD = relevant.reduce((a, i) => a + (i.subtotal || 0), 0)
-    const vatMKD = relevant.reduce((a, i) => a + (i.taxAmount || 0), 0)
+
+    // Split each invoice into net (base) and VAT components.
+    // Line items carry gross amounts; vatRate (e.g. 18 = 18%) splits them.
+    // Unknown rates fall back to the standard MK rate of 18%.
+    function splitNetVat(inv) {
+      const items = inv.lineItems || []
+      if (items.length === 0) {
+        const gross = inv.total || 0
+        const net = gross / 1.18
+        return { net, vat: gross - net }
+      }
+      let net = 0, vat = 0
+      for (const li of items) {
+        const gross = li.lineTotal || 0
+        const divisor = li.vatRate != null ? 1 + li.vatRate / 100 : 1.18
+        const n = gross / divisor
+        net += n
+        vat += gross - n
+      }
+      return { net, vat }
+    }
+
+    let netMKD = 0, vatMKD = 0
+    relevant.forEach((i) => {
+      const { net, vat } = splitNetVat(i)
+      netMKD += net
+      vatMKD += vat
+    })
     const vendors = new Set(relevant.map((i) => i.vendor)).size
 
     const balanced = invoices.filter((i) => journalTotals(i.journal || []).balanced).length

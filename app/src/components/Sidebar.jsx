@@ -51,7 +51,7 @@ export default function Sidebar() {
   return (
     <aside style={{ width: 236, flexShrink: 0, borderRight: '1px solid #E8E8E2', display: 'flex', flexDirection: 'column', background: '#fff' }}>
       <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid #F0F0EC' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 30, height: 30, borderRadius: 7, background: '#1A1A6E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="1.4">
               <path d="M3 1.6h7l3 3v9.8H3z" />
@@ -59,10 +59,7 @@ export default function Sidebar() {
               <path d="M5.4 8h5.2M5.4 10.4h5.2M5.4 5.6h2.2" />
             </svg>
           </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em', color: '#16161F' }}>Invoice Analyzer</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A0A0B2', marginTop: 1 }}>OCR · Шаблони</div>
-          </div>
+          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: '-0.01em', color: '#16161F', textAlign: 'center' }}>Паметен Скенер на Фактури</div>
         </div>
       </div>
 
