@@ -9,16 +9,16 @@ const sectionLabel = { ...mono, fontSize: 9.5, letterSpacing: '0.14em', textTran
 const card = { background: '#fff', border: '1px solid #E8E8E2', borderRadius: 10, overflow: 'hidden' }
 
 const PATTERN_FIELDS = [
-  { key: 'vendor_name',       label: 'Vendor name' },
-  { key: 'vendor_vat_id',     label: 'VAT ID' },
-  { key: 'invoice_number',    label: 'Invoice number' },
-  { key: 'invoice_date',      label: 'Invoice date' },
-  { key: 'due_date',          label: 'Due date' },
-  { key: 'subtotal',          label: 'Subtotal (net)' },
-  { key: 'tax_rate',          label: 'Tax rate %' },
-  { key: 'tax_amount',        label: 'VAT amount' },
-  { key: 'total',             label: 'Total (gross)' },
-  { key: 'payment_reference', label: 'Payment reference' },
+  { key: 'vendor_name',       label: 'Назив на добавувачот' },
+  { key: 'vendor_vat_id',     label: 'EDБ број' },
+  { key: 'invoice_number',    label: 'Број на фактура' },
+  { key: 'invoice_date',      label: 'Датум на фактура' },
+  { key: 'due_date',          label: 'Рок на плаќање' },
+  { key: 'subtotal',          label: 'Основа (нето)' },
+  { key: 'tax_rate',          label: 'ДДВ стапка %' },
+  { key: 'tax_amount',        label: 'Износ на ДДВ' },
+  { key: 'total',             label: 'Вкупно (бруто)' },
+  { key: 'payment_reference', label: 'Референца за плаќање' },
 ]
 
 // Example keywords shown as placeholder text per field
@@ -168,7 +168,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
             borderRadius: 3,
           }}
         >
-          {advanced ? '▲ Advanced' : '▼ Advanced'}
+          {advanced ? '▲ Напредно' : '▼ Напредно'}
         </button>
       </div>
 
@@ -179,10 +179,10 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
         onChange={(e) => handleKeywordsChange(e.target.value)}
         placeholder={
           advanced
-            ? `Keywords (optional)…`
+            ? `Клучни зборови (опционално)…`
             : ocrText
-              ? `Keywords… e.g. "${FIELD_PLACEHOLDER[fieldKey] || label}"`
-              : 'Upload invoice below to enable smart mode…'
+              ? `Клучни зборови… пр. "${FIELD_PLACEHOLDER[fieldKey] || label}"`
+              : 'Прикачи фактура подолу за паметен режим…'
         }
         disabled={isDisabled}
         style={{
@@ -198,7 +198,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
       {!advanced && (
         <div style={{ minHeight: 20, marginTop: 4 }}>
           {analyzing && (
-            <span style={{ fontSize: 10.5, color: '#9A9AAC', fontStyle: 'italic' }}>Analyzing…</span>
+            <span style={{ fontSize: 10.5, color: '#9A9AAC', fontStyle: 'italic' }}>Се анализира…</span>
           )}
           {!analyzing && preview && !preview._debug && !preview._notFound && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -217,8 +217,8 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
           {!analyzing && (preview?._debug || preview?._notFound) && keywords.trim() && ocrText && (
             <div>
               <span style={{ fontSize: 10.5, color: '#8B1A1A' }}>
-                ⚠ Not found in OCR text
-                {preview._localHit && <span style={{ color: '#7A4100' }}> (local {preview._localHit} match — regex mismatch)</span>}
+                ⚠ Не е пронајдено во OCR текстот
+                {preview._localHit && <span style={{ color: '#7A4100' }}> (локален {preview._localHit} совпаѓање — regex несовпаѓање)</span>}
               </span>
               {preview._debug && Object.entries(preview._debug).map(([kw, pat]) => (
                 <div key={kw} style={{ ...mono, fontSize: 9, color: '#5A3A3A', marginTop: 2, wordBreak: 'break-all' }}>
@@ -233,7 +233,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
             </div>
           )}
           {!analyzing && !ocrText && (
-            <span style={{ fontSize: 10.5, color: '#C0C0CC' }}>Upload an invoice to see preview</span>
+            <span style={{ fontSize: 10.5, color: '#C0C0CC' }}>Прикачи фактура за да видиш преглед</span>
           )}
         </div>
       )}
@@ -245,7 +245,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
             type="text"
             value={manualPattern}
             onChange={(e) => handleManualChange(e.target.value)}
-            placeholder="Custom regex pattern with (capture group)…"
+            placeholder="Прилагоден regex шаблон со (capture group)…"
             spellCheck={false}
             style={{
               width: '100%', boxSizing: 'border-box',
@@ -255,7 +255,7 @@ function FieldKeywordRow({ fieldKey, label, ocrText, initialKeywords, initialPat
             }}
           />
           {manualPattern && (
-            <div style={{ marginTop: 3, fontSize: 10, color: '#1A1A6E' }}>✓ Manual override active</div>
+            <div style={{ marginTop: 3, fontSize: 10, color: '#1A1A6E' }}>✓ Рачна замена е активна</div>
           )}
         </div>
       )}
@@ -333,7 +333,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
       {/* Top: display_name + currency */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12 }}>
         <div>
-          <label style={labelStyle}>Vendor display name *</label>
+          <label style={labelStyle}>Прикажано име на добавувачот *</label>
           <input
             style={inputStyle}
             value={meta.display_name}
@@ -343,7 +343,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
           />
         </div>
         <div style={{ width: 80 }}>
-          <label style={labelStyle}>Currency</label>
+          <label style={labelStyle}>Валута</label>
           <input
             style={inputStyle}
             value={meta.currency}
@@ -355,7 +355,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
 
       <div>
         <label style={labelStyle}>
-          Identifier keywords — any of these must appear in OCR text to activate this template (comma-separated)
+          Клучни зборови за идентификација — барем еден мора да се pojavi во OCR текстот за активирање (одделени со запирка)
         </label>
         <input
           style={inputStyle}
@@ -367,7 +367,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
 
       {/* Patterns section */}
       <div>
-        <div style={{ ...sectionLabel, marginBottom: 10 }}>Extraction patterns</div>
+        <div style={{ ...sectionLabel, marginBottom: 10 }}>Шаблони за извлекување</div>
 
         {/* OCR upload for smart mode */}
         <div style={{
@@ -394,16 +394,16 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
               cursor: 'pointer', flexShrink: 0,
             }}
           >
-            {ocrLoading ? 'Scanning…' : ocrText ? '↺ Change invoice' : '⬆ Upload invoice for smart mode'}
+            {ocrLoading ? 'Скенирање…' : ocrText ? '↺ Замени фактура' : '⬆ Прикачи фактура за паметен режим'}
           </button>
           {ocrText && !ocrLoading && (
             <span style={{ fontSize: 11.5, color: '#0D5C44', fontWeight: 500 }}>
-              ✓ {ocrFile?.name || 'Invoice loaded'} — type keywords to build patterns in real-time
+              ✓ {ocrFile?.name || 'Фактурата е вчитана'} — напиши клучни зборови за градење шаблони во реално време
             </span>
           )}
           {!ocrText && !ocrLoading && (
             <span style={{ fontSize: 11, color: '#9A9AAC' }}>
-              Upload an invoice to let the app auto-generate regex patterns from keywords
+              Прикачи фактура за да може апликацијата автоматски да генерира regex шаблони од клучни зборови
             </span>
           )}
           {ocrError && (
@@ -431,7 +431,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
           {/* OCR text pane (right side) */}
           {ocrText && (
             <div style={{ position: 'relative' }}>
-              <div style={{ ...sectionLabel, marginBottom: 6 }}>OCR text — copy keywords from here</div>
+              <div style={{ ...sectionLabel, marginBottom: 6 }}>OCR текст — копирај клучни зборови оттука</div>
               <pre style={{
                 margin: 0,
                 background: '#F7F7F5',
@@ -461,14 +461,14 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
           onClick={onCancel}
           style={{ border: '1px solid #E2E2DC', background: '#fff', color: '#5A5A6E', borderRadius: 7, padding: '8px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
         >
-          Cancel
+          Откажи
         </button>
         <button
           type="submit"
           disabled={saving}
           style={{ background: saving ? '#8A8ABA' : '#1A1A6E', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 20px', fontSize: 12.5, fontWeight: 600, cursor: saving ? 'default' : 'pointer' }}
         >
-          {saving ? 'Saving…' : 'Save template'}
+          {saving ? 'Се зачувува…' : 'Зачувај шаблон'}
         </button>
       </div>
     </form>
@@ -501,9 +501,9 @@ function OcrTestPanel() {
 
   return (
     <div style={{ ...card, padding: 20 }}>
-      <div style={{ ...sectionLabel, marginBottom: 12 }}>OCR text extractor — test your regex patterns</div>
+      <div style={{ ...sectionLabel, marginBottom: 12 }}>OCR екстрактор — тестирај ги regex шаблоните</div>
       <p style={{ fontSize: 12.5, color: '#5A5A6E', marginTop: 0, marginBottom: 14, lineHeight: 1.6 }}>
-        Upload an invoice PDF to see the raw OCR text. Copy field values from here to build your regex patterns above.
+        Прикачи фактура PDF за да го видиш суровиот OCR текст. Копирај вредности оттука за градење regex шаблони погоре.
       </p>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <input
@@ -517,7 +517,7 @@ function OcrTestPanel() {
           onClick={() => inputRef.current.click()}
           style={{ border: '1px solid #E2E2DC', background: '#fff', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, color: '#5A5A6E', fontWeight: 600, cursor: 'pointer' }}
         >
-          {file ? file.name : 'Choose invoice file…'}
+          {file ? file.name : 'Избери датотека…'}
         </button>
         {file && (
           <button
@@ -525,7 +525,7 @@ function OcrTestPanel() {
             disabled={loading}
             style={{ background: loading ? '#8A8ABA' : '#1A1A6E', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 16px', fontSize: 12.5, fontWeight: 600, cursor: loading ? 'default' : 'pointer' }}
           >
-            {loading ? 'Extracting…' : 'Extract OCR text'}
+            {loading ? 'Се извлекува…' : 'Извлечи OCR текст'}
           </button>
         )}
       </div>
@@ -534,7 +534,7 @@ function OcrTestPanel() {
       )}
       {result && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ ...sectionLabel, marginBottom: 6 }}>Raw OCR output</div>
+          <div style={{ ...sectionLabel, marginBottom: 6 }}>Суров OCR излез</div>
           <pre
             style={{
               background: '#F7F7F5',
@@ -570,7 +570,7 @@ function TemplateCard({ template, onEdit, onDelete }) {
   const patternCount = Object.values(template.patterns || {}).filter(Boolean).length
 
   async function handleDelete() {
-    if (!window.confirm(`Delete template "${template.display_name}"?`)) return
+    if (!window.confirm(`Избриши шаблон "${template.display_name}"?`)) return
     setDeleting(true)
     await onDelete(template.id)
   }
@@ -601,12 +601,12 @@ function TemplateCard({ template, onEdit, onDelete }) {
               </span>
             ))}
             {(template.keywords || []).length > 4 && (
-              <span style={{ fontSize: 11, color: '#9A9AAC' }}>+{template.keywords.length - 4} more</span>
+              <span style={{ fontSize: 11, color: '#9A9AAC' }}>+{template.keywords.length - 4} повеќе</span>
             )}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ ...mono, fontSize: 10, color: '#8A8A9C' }}>{patternCount} pattern{patternCount !== 1 ? 's' : ''}</span>
+          <span style={{ ...mono, fontSize: 10, color: '#8A8A9C' }}>{patternCount} шаблон{patternCount !== 1 ? 'и' : ''}</span>
           <span style={{ ...mono, fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#F0F0EC', color: '#5A5A6E' }}>{template.currency || 'MKD'}</span>
           <svg
             width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#A0A0B2" strokeWidth="1.5"
@@ -620,7 +620,7 @@ function TemplateCard({ template, onEdit, onDelete }) {
       {/* Expanded: patterns + actions */}
       {expanded && (
         <div style={{ borderTop: '1px solid #F0F0EC', padding: '14px 18px 18px' }}>
-          <div style={{ ...sectionLabel, marginBottom: 10 }}>Configured patterns</div>
+          <div style={{ ...sectionLabel, marginBottom: 10 }}>Конфигурирани шаблони</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
             {PATTERN_FIELDS.map((f) => {
               const val = template.patterns?.[f.key]
@@ -634,7 +634,7 @@ function TemplateCard({ template, onEdit, onDelete }) {
                     </div>
                   )}
                   <div style={{ ...mono, fontSize: 11, color: val ? '#16161F' : hint ? '#1A1A6E' : '#C4C4D0', wordBreak: 'break-all' }}>
-                    {val || (hint ? '— via keyword hint —' : '— heuristic fallback —')}
+                    {val || (hint ? '— преку клучен збор —' : '— хеуристичко извлекување —')}
                   </div>
                 </div>
               )
@@ -645,14 +645,14 @@ function TemplateCard({ template, onEdit, onDelete }) {
               onClick={(e) => { e.stopPropagation(); onEdit(template) }}
               style={{ border: '1px solid #E2E2DC', background: '#fff', color: '#1A1A6E', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
             >
-              Edit
+              Уреди
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleDelete() }}
               disabled={deleting}
               style={{ border: '1px solid #E6C9C9', background: '#fff', color: '#8B1A1A', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.5 : 1 }}
             >
-              {deleting ? 'Deleting…' : 'Delete'}
+              {deleting ? 'Се брише…' : 'Избриши'}
             </button>
           </div>
         </div>
@@ -707,7 +707,7 @@ export default function Templates() {
       await loadTemplates()
       setEditing(null)
     } catch (e) {
-      alert('Save failed: ' + e.message)
+      alert('Зачувувањето не успеа: ' + e.message)
     } finally {
       setSaving(false)
     }
@@ -718,7 +718,7 @@ export default function Templates() {
       await deleteTemplate(id)
       await loadTemplates()
     } catch (e) {
-      alert('Delete failed: ' + e.message)
+      alert('Бришењето не успеа: ' + e.message)
     }
   }
 
@@ -728,10 +728,10 @@ export default function Templates() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>
           <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 24, fontWeight: 600, color: '#16161F', margin: 0 }}>
-            Vendor Templates
+            Шаблони за добавувачи
           </h1>
           <p style={{ fontSize: 13, color: '#8A8A9C', margin: '6px 0 0' }}>
-            Type plain keywords — the app builds the regex automatically from the invoice OCR text.
+            Внеси клучни зборови — апликацијата автоматски гради regex шаблони од OCR текстот на фактурата.
           </p>
         </div>
         {editing === null && (
@@ -744,7 +744,7 @@ export default function Templates() {
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M8 2v12M2 8h12" strokeLinecap="round" />
             </svg>
-            Add Template
+            Додај шаблон
           </button>
         )}
       </div>
@@ -753,7 +753,7 @@ export default function Templates() {
       {editing !== null && (
         <div style={{ ...card, overflow: 'visible', padding: 24, marginTop: 20, marginBottom: 20 }}>
           <div style={{ ...sectionLabel, marginBottom: 16 }}>
-            {editing === 'new' ? 'New vendor template' : `Editing: ${editing.display_name}`}
+            {editing === 'new' ? 'Нов шаблон за добавувач' : `Уредување: ${editing.display_name}`}
           </div>
           <TemplateForm
             initial={editing === 'new' ? null : editing}
@@ -766,7 +766,7 @@ export default function Templates() {
 
       {/* Template list */}
       {loading && (
-        <div style={{ color: '#8A8A9C', fontSize: 13, padding: '40px 0', textAlign: 'center' }}>Loading templates…</div>
+        <div style={{ color: '#8A8A9C', fontSize: 13, padding: '40px 0', textAlign: 'center' }}>Се вчитуваат шаблони…</div>
       )}
       {error && (
         <div style={{ color: '#8B1A1A', background: '#FDEBEB', borderRadius: 8, padding: '14px 18px', marginTop: 16, fontSize: 13 }}>
@@ -777,7 +777,7 @@ export default function Templates() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: editing ? 0 : 20 }}>
           {templates.length === 0 && (
             <div style={{ color: '#8A8A9C', fontSize: 13, padding: '40px 0', textAlign: 'center' }}>
-              No templates yet. Add one to enable deterministic extraction for recurring vendors.
+              Нема шаблони. Додај еден за детерминистичко извлекување за повторливи добавувачи.
             </div>
           )}
           {templates.map((t) => (
@@ -789,7 +789,7 @@ export default function Templates() {
       {/* OCR debug tool */}
       {!loading && !error && (
         <div style={{ marginTop: 32 }}>
-          <div style={{ ...sectionLabel, marginBottom: 14 }}>Developer tools</div>
+          <div style={{ ...sectionLabel, marginBottom: 14 }}>Алатки за развивачи</div>
           <OcrTestPanel />
         </div>
       )}

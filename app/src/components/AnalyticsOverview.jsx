@@ -4,7 +4,7 @@ import { useApp } from '../state/appContext'
 import { mkd, fmtMKDRounded } from '../lib/format'
 import { journalTotals } from '../lib/journal'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS = ['Јан', 'Феб', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Ное', 'Дек']
 const PALETTE = ['#1A1A6E', '#2E2E9E', '#3AA17E', '#0D5C44', '#7A4100', '#8A8A9C', '#5B8DEF', '#B7791F']
 const card = { background: '#fff', border: '1px solid #E8E8E2', borderRadius: 10 }
 const chartTitle = { fontSize: 13, fontWeight: 600, color: '#16161F', marginBottom: 10 }
@@ -23,9 +23,7 @@ export default function AnalyticsOverview() {
   const { invoices } = useApp()
 
   const data = useMemo(() => {
-    // "Relevant" = everything not rejected/non-relevant.
     const relevant = invoices.filter((i) => i.status !== 'Rejected')
-    // FX factor to EUR, derived from the same conversion mkd() uses on the total.
     const netMKD = relevant.reduce((a, i) => a + (i.subtotal || 0), 0)
     const vatMKD = relevant.reduce((a, i) => a + (i.taxAmount || 0), 0)
     const vendors = new Set(relevant.map((i) => i.vendor)).size
@@ -33,7 +31,6 @@ export default function AnalyticsOverview() {
     const balanced = invoices.filter((i) => journalTotals(i.journal || []).balanced).length
     const health = invoices.length ? Math.round((balanced / invoices.length) * 100) : 100
 
-    // Top vendors by spend (EUR)
     const byVendor = {}
     relevant.forEach((i) => {
       byVendor[i.vendor] = (byVendor[i.vendor] || 0) + mkd(i)
@@ -43,14 +40,12 @@ export default function AnalyticsOverview() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 6)
 
-    // Currency distribution (EUR-equivalent)
     const byCur = {}
     relevant.forEach((i) => {
       byCur[i.currency] = (byCur[i.currency] || 0) + mkd(i)
     })
     const currency = Object.entries(byCur).map(([name, value]) => ({ name, value: Math.round(value) }))
 
-    // Monthly expense trend (EUR-equivalent of total)
     const byMonth = {}
     relevant.forEach((i) => {
       if (!i.invoiceDate || i.invoiceDate.length < 7) return
@@ -71,20 +66,20 @@ export default function AnalyticsOverview() {
 
   return (
     <div style={{ marginTop: 14 }}>
-      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 18, fontWeight: 600, color: '#16161F', margin: '0 0 12px' }}>Financial analytics</h2>
+      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 18, fontWeight: 600, color: '#16161F', margin: '0 0 12px' }}>Финансиска аналитика</h2>
 
       <div style={{ ...card, padding: 18 }}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <StatCard label="Нето трошоци MKD" value={fmtMKDRounded(data.netMKD)} sub="Без одбиени" accent="#1A1A6E" />
           <StatCard label="ДДВ за повраток MKD" value={fmtMKDRounded(data.vatMKD)} sub="Влезен ДДВ" accent="#0D5C44" />
-          <StatCard label="Active vendors" value={String(data.vendors)} sub="Distinct suppliers" />
-          <StatCard label="Journal health" value={data.health + '%'} sub="Balanced entries" accent={data.health === 100 ? '#0D5C44' : '#7A4100'} />
+          <StatCard label="Активни добавувачи" value={String(data.vendors)} sub="Различни добавувачи" />
+          <StatCard label="Здравје на книжење" value={data.health + '%'} sub="Избалансирани ставки" accent={data.health === 100 ? '#0D5C44' : '#7A4100'} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14, marginTop: 16 }}>
           {/* Monthly trend */}
           <div style={{ border: '1px solid #F0F0EC', borderRadius: 10, padding: '14px 14px 6px' }}>
-            <div style={chartTitle}>Monthly expense trend</div>
+            <div style={chartTitle}>Месечен тренд на трошоци</div>
             <div style={{ height: 170 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.monthly} margin={{ top: 6, right: 10, bottom: 4, left: 0 }}>
@@ -99,7 +94,7 @@ export default function AnalyticsOverview() {
 
           {/* Top vendors */}
           <div style={{ border: '1px solid #F0F0EC', borderRadius: 10, padding: '14px 14px 6px' }}>
-            <div style={chartTitle}>Top vendors by spend</div>
+            <div style={chartTitle}>Топ добавувачи по потрошувачка</div>
             <div style={{ height: 170 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.topVendors} layout="vertical" margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
@@ -118,7 +113,7 @@ export default function AnalyticsOverview() {
 
           {/* Currency distribution */}
           <div style={{ border: '1px solid #F0F0EC', borderRadius: 10, padding: '14px 14px 6px' }}>
-            <div style={chartTitle}>Currency distribution</div>
+            <div style={chartTitle}>Распределба по валута</div>
             <div style={{ height: 170, display: 'flex', alignItems: 'center' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>

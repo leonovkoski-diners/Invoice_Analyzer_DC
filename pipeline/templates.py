@@ -172,15 +172,20 @@ def apply_template(template: Dict, full_text: str, lines: List[str]) -> Dict[str
     Each extraction step is individually guarded so one failure never crashes the whole invoice.
     """
     patterns = template.get("patterns", {})
+    defaults = template.get("defaults", {})
 
-    # Vendor name
+    # Vendor name — template default takes priority over extraction
     vendor_name = None
-    try:
-        vendor_name = _regex_extract(patterns.get("vendor_name"), full_text)
-        if not vendor_name:
-            vendor_name = extract_vendor_name(lines, full_text)
-    except Exception as exc:
-        logger.warning("vendor_name extraction failed in template: %s", exc)
+    if defaults.get("vendor_name"):
+        vendor_name = defaults["vendor_name"]
+        logger.info("vendor_name from template default: '%s'", vendor_name)
+    else:
+        try:
+            vendor_name = _regex_extract(patterns.get("vendor_name"), full_text)
+            if not vendor_name:
+                vendor_name = extract_vendor_name(lines, full_text)
+        except Exception as exc:
+            logger.warning("vendor_name extraction failed in template: %s", exc)
 
     # Invoice number
     invoice_number = "N/A"
@@ -262,6 +267,16 @@ def apply_template(template: Dict, full_text: str, lines: List[str]) -> Dict[str
             komitent_low_confidence = match.get("low_confidence", False)
     except Exception as _exc:
         logger.debug("Komitent lookup skipped: %s", _exc)
+
+    # Template defaults override lookup results — user confirmed these values
+    if defaults.get("komitent_name"):
+        komitent_name = defaults["komitent_name"]
+        komitent_low_confidence = False
+        logger.info("komitent_name from template default: '%s'", komitent_name)
+    if defaults.get("komitent_sifra"):
+        komitent_id = defaults["komitent_sifra"]
+        komitent_low_confidence = False
+        logger.info("komitent_sifra from template default: '%s'", komitent_id)
 
     result: Dict[str, Any] = {
         "vendor_name": final_vendor_name,

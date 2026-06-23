@@ -1,19 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../state/appContext'
 
-// Status dot colors for each invoice in the batch review bar.
 const DOT_COLOR = {
   Approved: '#0D5C44',
   Exported: '#0D5C44',
   Rejected: '#8B1A1A',
-  Pending: '#C4C4D0',
+  Pending:  '#C4C4D0',
 }
 
 const DOT_TITLE = {
-  Approved: 'Approved',
-  Exported: 'Exported',
-  Rejected: 'Rejected',
-  Pending: 'Pending review',
+  Approved: 'Одобрена',
+  Exported: 'Извезена',
+  Rejected: 'Одбиена',
+  Pending:  'На чекање за преглед',
 }
 
 export default function BatchNavBar({ currentInvoiceId }) {
@@ -38,7 +37,6 @@ export default function BatchNavBar({ currentInvoiceId }) {
   const hasNext = batchCursor < total - 1
   const errorCount = batchErrorItems.length
 
-  // Count approved invoices in this batch for the export button label.
   const doneIds = new Set(batchDoneItems.map((i) => i.invoiceId))
   const approvedCount = invoices.filter(
     (inv) => doneIds.has(inv.id) && (inv.status === 'Approved' || inv.status === 'Exported'),
@@ -60,12 +58,12 @@ export default function BatchNavBar({ currentInvoiceId }) {
     <div style={{ background: '#1A1A6E', borderRadius: '0 0 10px 10px', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
       {/* Batch label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>Batch session</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>Серија</span>
         {!batchAllDone && (
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', opacity: 0.7, animation: 'pulseDot 1s infinite' }} />
         )}
         {errorCount > 0 && (
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#F4A0A0', letterSpacing: '0.05em' }}>{errorCount} failed</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#F4A0A0', letterSpacing: '0.05em' }}>{errorCount} неуспешни</span>
         )}
       </div>
 
@@ -78,7 +76,7 @@ export default function BatchNavBar({ currentInvoiceId }) {
           onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.5 3.5L5 8l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Prev
+          Претходна
         </button>
 
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#fff', fontWeight: 600, minWidth: 54, textAlign: 'center' }}>
@@ -91,12 +89,12 @@ export default function BatchNavBar({ currentInvoiceId }) {
           onMouseEnter={(e) => hasNext && (e.currentTarget.style.background = 'rgba(255,255,255,0.22)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
         >
-          Next
+          Следна
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6.5 3.5L11 8l-4.5 4.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </div>
 
-      {/* Status dots — one per successfully extracted invoice */}
+      {/* Status dots */}
       {total <= 20 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, flexWrap: 'wrap' }}>
           {batchDoneItems.map((item, idx) => {
@@ -148,7 +146,7 @@ export default function BatchNavBar({ currentInvoiceId }) {
           <path d="M3 1.6h7l3 3v9.8H3z" />
           <path d="M5.6 8.4l1.8 1.8 3-3.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Export {approvedCount > 0 ? approvedCount : ''} Approved
+        Извези {approvedCount > 0 ? approvedCount : ''} одобрени
       </button>
 
       {/* End session */}
@@ -158,7 +156,7 @@ export default function BatchNavBar({ currentInvoiceId }) {
         onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
         onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
       >
-        End session
+        Заврши серија
       </button>
     </div>
   )

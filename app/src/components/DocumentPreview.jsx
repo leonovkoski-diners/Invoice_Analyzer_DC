@@ -5,10 +5,6 @@ function isImageFile(fileType, fileName) {
   return /\.(png|jpe?g|gif|webp|tiff?|bmp)$/i.test(fileName || '')
 }
 
-// Source-document viewer for the review screen — lets the user compare the original
-// scan/PDF against the extracted fields. Real files exist only for invoices uploaded
-// in the current session (no backend object store in this prototype); seed invoices
-// show an explanatory empty state.
 export default function DocumentPreview({ invoice }) {
   const { fileUrl, fileType, fileName } = invoice
   const hasFile = !!fileUrl
@@ -17,9 +13,9 @@ export default function DocumentPreview({ invoice }) {
   return (
     <div style={{ position: 'sticky', top: 0, alignSelf: 'start', display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={sectionLabel}>Source document</div>
+        <div style={sectionLabel}>Изворен документ</div>
         {hasFile && (
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8.5, letterSpacing: '0.08em', background: '#EEEEF8', color: '#1A1A6E', border: '1px solid rgba(26,26,110,0.18)', padding: '1px 6px', borderRadius: 3 }}>UPLOADED</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8.5, letterSpacing: '0.08em', background: '#EEEEF8', color: '#1A1A6E', border: '1px solid rgba(26,26,110,0.18)', padding: '1px 6px', borderRadius: 3 }}>ПРИКАЧЕНО</span>
         )}
       </div>
 
@@ -39,7 +35,7 @@ export default function DocumentPreview({ invoice }) {
               rel="noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#2E2E9E', fontSize: 11.5, fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}
             >
-              Open
+              Отвори
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M6 3h7v7M13 3L6.5 9.5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M11 9.5v3.1a1 1 0 01-1 1H3.4a1 1 0 01-1-1V6a1 1 0 011-1h3.1" strokeLinecap="round" />
@@ -58,9 +54,9 @@ export default function DocumentPreview({ invoice }) {
                   <path d="M5.4 8.4h5.2M5.4 10.8h3.4" strokeLinecap="round" />
                 </svg>
               </div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#5A5A6E' }}>Source file not stored</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#5A5A6E' }}>Изворната датотека не е зачувана</div>
               <div style={{ fontSize: 12, color: '#9A9AAC', marginTop: 6, lineHeight: 1.5 }}>
-                The original document is available for invoices you upload in this session. Seed records keep only the extracted data.
+                Оригиналниот документ е достапен за фактури прикачени во оваа сесија.
               </div>
             </div>
           ) : isImage ? (

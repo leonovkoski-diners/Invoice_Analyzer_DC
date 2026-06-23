@@ -6,7 +6,6 @@ import Toasts from './components/Toasts'
 import Dashboard from './pages/Dashboard'
 import Invoices from './pages/Invoices'
 import InvoiceDetail from './pages/InvoiceDetail'
-import Payments from './pages/Payments'
 import Templates from './pages/Templates'
 
 export default function App() {
@@ -21,7 +20,6 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/invoices/:id" element={<InvoiceDetail />} />
-            <Route path="/payments" element={<Payments />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

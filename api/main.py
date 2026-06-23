@@ -33,7 +33,7 @@ from fastapi.responses import JSONResponse
 
 from pipeline.pipeline import InvoicePipeline
 from pipeline.schema import InvoiceRecord
-from pipeline.templates import delete_template, load_templates, upsert_template
+from pipeline.templates import delete_template, load_templates, save_templates, upsert_template
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -170,9 +170,11 @@ async def extract(file: UploadFile = File(...)) -> JSONResponse:
             tmpl = next((t for t in load_templates() if t["id"] == result.template_used), None)
             method_label = f"template:{result.template_used}"
             template_name = tmpl["display_name"] if tmpl else result.template_used
+            template_defaults = tmpl.get("defaults", {}) if tmpl else {}
         else:
             method_label = "heuristic_ocr"
             template_name = None
+            template_defaults = {}
 
         return JSONResponse(
             content={
@@ -183,6 +185,7 @@ async def extract(file: UploadFile = File(...)) -> JSONResponse:
                 "extraction_method": method_label,
                 "template_used": result.template_used,
                 "template_name": template_name,
+                "template_defaults": template_defaults,
                 "ocr_text": result.ocr_text,
                 "file_name": file.filename,
             }
@@ -278,6 +281,34 @@ def analyze_keyword_route(body: dict = Body(...)) -> dict[str, Any]:
         print(f"[analyze-keyword] EXCEPTION: {e}")
         traceback.print_exc()
         raise
+
+
+@app.post("/api/templates/{template_id}/defaults")
+def set_template_default(template_id: str, body: dict = Body(...)) -> dict[str, Any]:
+    """Set or clear a single default value for a vendor template field."""
+    _ALLOWED = {"vendor_name", "komitent_name", "komitent_sifra"}
+    field = body.get("field")
+    value = body.get("value")  # None/null clears the default
+    if not field or field not in _ALLOWED:
+        raise HTTPException(status_code=422, detail=f"field must be one of {sorted(_ALLOWED)}")
+    templates = load_templates()
+    idx = next((i for i, t in enumerate(templates) if t["id"] == template_id), None)
+    if idx is None:
+        raise HTTPException(status_code=404, detail=f"Template '{template_id}' not found")
+    tmpl = dict(templates[idx])
+    d = dict(tmpl.get("defaults", {}))
+    if value:
+        d[field] = value
+    else:
+        d.pop(field, None)
+    if d:
+        tmpl["defaults"] = d
+    elif "defaults" in tmpl:
+        del tmpl["defaults"]
+    templates[idx] = tmpl
+    save_templates(templates)
+    logger.info("Template '%s': default '%s' = %r", template_id, field, value)
+    return {"template": tmpl}
 
 
 @app.post("/api/templates/save-from-invoice")

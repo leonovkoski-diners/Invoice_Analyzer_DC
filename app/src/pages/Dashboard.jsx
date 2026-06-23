@@ -19,10 +19,10 @@ export default function Dashboard() {
   const totalValue = invoices.reduce((acc, i) => acc + (i.total || 0), 0)
 
   const kpis = [
-    { label: 'Total Invoices', value: String(total), sub: 'In workspace', data: [total], color: '#1A1A6E', fill: 'rgba(26,26,110,0.08)' },
-    { label: 'Pending Approval', value: String(pending), sub: 'Awaiting review', data: [pending], color: '#B7791F', fill: 'rgba(183,121,31,0.10)' },
-    { label: 'Exported This Month', value: String(exported), sub: new Date().toLocaleString('en', { month: 'long', year: 'numeric' }), data: [exported], color: '#0D5C44', fill: 'rgba(13,92,68,0.10)' },
-    { label: 'Total Value', value: fmtMKDRounded(totalValue), sub: 'MKD, сите фактури', data: [totalValue || 0], color: '#1A1A6E', fill: 'rgba(26,26,110,0.08)' },
+    { label: 'Вкупно фактури', value: String(total), sub: 'Во работниот простор', data: [total], color: '#1A1A6E', fill: 'rgba(26,26,110,0.08)' },
+    { label: 'Чекаат одобрување', value: String(pending), sub: 'Чекаат преглед', data: [pending], color: '#B7791F', fill: 'rgba(183,121,31,0.10)' },
+    { label: 'Извезени овој месец', value: String(exported), sub: new Date().toLocaleString('mk', { month: 'long', year: 'numeric' }), data: [exported], color: '#0D5C44', fill: 'rgba(13,92,68,0.10)' },
+    { label: 'Вкупна вредност', value: fmtMKDRounded(totalValue), sub: 'MKD, сите фактури', data: [totalValue || 0], color: '#1A1A6E', fill: 'rgba(26,26,110,0.08)' },
   ]
 
   const recent = invoices.slice(0, 6)
@@ -54,11 +54,11 @@ export default function Dashboard() {
       <div style={{ ...cardStyle, padding: '18px 20px 14px', marginTop: 14 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
           <div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Invoice volume</div>
-            <div style={{ fontSize: 11.5, color: '#A0A0B2', marginTop: 1 }}>Processed per day · last 14 days</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Волумен на фактури</div>
+            <div style={{ fontSize: 11.5, color: '#A0A0B2', marginTop: 1 }}>Обработени по ден · последни 14 дена</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#8A8A9C', letterSpacing: '0.04em' }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#1A1A6E' }} /> PROCESSED
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#1A1A6E' }} /> ОБРАБОТЕНИ
           </div>
         </div>
         <VolumeChart />
@@ -69,8 +69,8 @@ export default function Dashboard() {
         {/* Recent */}
         <div style={{ ...cardStyle, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #F0F0EC' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Recent invoices</div>
-            <button onClick={() => navigate('/invoices')} style={{ background: 'none', border: 'none', color: '#2E2E9E', fontSize: 12, fontWeight: 600, padding: 0 }}>View all →</button>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Последни фактури</div>
+            <button onClick={() => navigate('/invoices')} style={{ background: 'none', border: 'none', color: '#2E2E9E', fontSize: 12, fontWeight: 600, padding: 0 }}>Прикажи ги сите →</button>
           </div>
           {recent.map((inv) => (
             <div
@@ -98,7 +98,7 @@ export default function Dashboard() {
               <path d="M8 6.4v3.2" strokeLinecap="round" />
               <circle cx="8" cy="11.6" r="0.5" fill="#8B1A1A" />
             </svg>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Needs attention</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16161F' }}>Потребно внимание</div>
             <span style={{ marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#8B1A1A', fontWeight: 500 }}>{attention.length}</span>
           </div>
           {attentionTop.map((inv) => (
@@ -117,7 +117,7 @@ export default function Dashboard() {
             </div>
           ))}
           {attention.length === 0 && (
-            <div style={{ padding: '28px 18px', textAlign: 'center', color: '#A0A0B2', fontSize: 12.5 }}>All clear — no validation flags.</div>
+            <div style={{ padding: '28px 18px', textAlign: 'center', color: '#A0A0B2', fontSize: 12.5 }}>Сè е во ред — нема флагови за валидација.</div>
           )}
         </div>
       </div>

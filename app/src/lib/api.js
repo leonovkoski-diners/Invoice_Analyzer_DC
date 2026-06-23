@@ -92,6 +92,22 @@ export async function analyzeKeyword(keywords, ocrText) {
   return res.json() // { pattern, value, type, confidence, keyword_used }
 }
 
+// Set or clear a single template default value.
+// field: 'vendor_name' | 'komitent_name' | 'komitent_sifra'
+// value: string to set, null to clear
+export async function setTemplateDefault(templateId, field, value) {
+  const res = await fetch(`${API_BASE}/api/templates/${encodeURIComponent(templateId)}/defaults`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ field, value: value ?? null }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Failed to save default (${res.status})`)
+  }
+  return res.json() // { template: {...} }
+}
+
 export async function deleteTemplate(id) {
   const res = await fetch(`${API_BASE}/api/templates/${encodeURIComponent(id)}`, {
     method: 'DELETE',

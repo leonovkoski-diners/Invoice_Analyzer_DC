@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { fmtMoney, fmtDate } from '../lib/format'
 import { parseBackendFlags } from '../lib/invoice'
 import { generateJournal } from '../lib/journal'
-import { extractDocument } from '../lib/api'
+import { extractDocument, setTemplateDefault as setTemplateDefaultApi } from '../lib/api'
 import { exportToHelixK, exportBatchToHelixK } from '../lib/helixk'
 import { AppContext } from './appContext'
 
@@ -61,6 +61,7 @@ function invoiceFromExtraction(resp, fileMeta) {
     hiddenFields: [],
     templateUsed: resp.template_used || null,
     templateName: resp.template_name || null,
+    templateDefaults: resp.template_defaults || {},
     ocrText: resp.ocr_text || '',
   }
   return decorate(base, resp.extraction_method || 'local_ocr')
@@ -108,11 +109,11 @@ export function AppProvider({ children }) {
       const high = inv.flags.filter((f) => f.severity === 'high')
       const alreadyPosted = inv.status === 'Approved' || inv.status === 'Exported'
       if (!alreadyPosted && high.length) {
-        pushToast('error', 'Approval blocked', high.length + ' high-severity flag' + (high.length > 1 ? 's' : '') + ' must be resolved first')
+        pushToast('error', 'Одобрувањето е блокирано', high.length + ' критичен флаг' + (high.length > 1 ? 'ови' : '') + ' мора да се решат прво')
         return false
       }
       setInvoices((list) => list.map((i) => (i.id === id ? { ...i, status: 'Approved' } : i)))
-      pushToast('ok', 'Approved', inv.number + ' posted to the journal')
+      pushToast('ok', 'Одобрена', inv.number + ' прокнижена')
       return true
     },
     [invoices, pushToast],
@@ -123,7 +124,7 @@ export function AppProvider({ children }) {
       const inv = invoices.find((i) => i.id === id)
       if (!inv) return
       setInvoices((list) => list.map((i) => (i.id === id ? { ...i, status: 'Rejected' } : i)))
-      pushToast('warn', 'Rejected', inv.number + ' marked non-relevant')
+      pushToast('warn', 'Одбиена', inv.number + ' означена како нерелевантна')
     },
     [invoices, pushToast],
   )
@@ -134,16 +135,16 @@ export function AppProvider({ children }) {
       const inv = invoices.find((i) => i.id === id)
       if (!inv) return
       if (inv.status !== 'Approved' && inv.status !== 'Exported') {
-        pushToast('error', 'Export blocked', 'Approve the document before exporting')
+        pushToast('error', 'Извозот е блокиран', 'Одобри го документот пред извоз')
         return
       }
       try {
         const filename = exportToHelixK(inv)
         const was = inv.status === 'Exported'
         setInvoices((list) => list.map((i) => (i.id === id ? { ...i, status: 'Exported' } : i)))
-        pushToast('ok', was ? 'Re-exported to Helix-K' : 'Exported to Helix-K', filename + ' downloaded')
+        pushToast('ok', was ? 'Повторно извезена во Helix-K' : 'Извезена во Helix-K', filename + ' преземено')
       } catch (err) {
-        pushToast('error', 'Export failed', err.message || 'Could not generate .xlsx')
+        pushToast('error', 'Извозот не успеа', err.message || 'Не може да се генерира .xlsx')
       }
     },
     [invoices, pushToast],
@@ -191,6 +192,37 @@ export function AppProvider({ children }) {
       }),
     )
   }, [])
+
+  // Persist a field default on the matched vendor template and update local state.
+  // field: 'vendor_name' | 'komitent_name' | 'komitent_sifra'
+  // value: string to set, null to clear
+  const setTemplateDefault = useCallback(
+    async (invoiceId, templateId, field, value) => {
+      try {
+        await setTemplateDefaultApi(templateId, field, value)
+        setInvoices((list) =>
+          list.map((i) => {
+            if (i.id !== invoiceId) return i
+            const td = { ...(i.templateDefaults || {}) }
+            if (value != null && value !== '') {
+              td[field] = value
+            } else {
+              delete td[field]
+            }
+            return { ...i, templateDefaults: td }
+          }),
+        )
+        pushToast(
+          'ok',
+          value ? 'Стандардот е зачуван' : 'Стандардот е избришан',
+          value ? 'Ќе се користи за сите идни фактури од овој добавувач' : 'Полето ќе користи извлекување за идни фактури',
+        )
+      } catch (err) {
+        pushToast('error', 'Неуспешно зачувување на стандардот', err.message)
+      }
+    },
+    [pushToast],
+  )
 
   // Hide a standard field by label (added to invoice.hiddenFields).
   const hideField = useCallback((id, label) => {
@@ -302,7 +334,7 @@ export function AppProvider({ children }) {
       .sort((a, b) => (a.invoiceDate || '').localeCompare(b.invoiceDate || ''))
 
     if (approved.length === 0) {
-      pushToast('warn', 'Nothing to export', 'Approve at least one invoice first')
+      pushToast('warn', 'Нема за извоз', 'Прво одобри барем една фактура')
       return
     }
 
@@ -311,9 +343,9 @@ export function AppProvider({ children }) {
       setInvoices((list) =>
         list.map((inv) => (approved.some((a) => a.id === inv.id) ? { ...inv, status: 'Exported' } : inv)),
       )
-      pushToast('ok', 'Batch exported', `${approved.length} invoice${approved.length > 1 ? 's' : ''} → ${filename}`)
+      pushToast('ok', 'Серијата е извезена', `${approved.length} ${approved.length > 1 ? 'фактури' : 'фактура'} → ${filename}`)
     } catch (err) {
-      pushToast('error', 'Export failed', err.message || 'Could not generate .xlsx')
+      pushToast('error', 'Извозот не успеа', err.message || 'Не може да се генерира .xlsx')
     }
   }, [batchQueue, invoices, pushToast])
 
@@ -333,6 +365,7 @@ export function AppProvider({ children }) {
       updateExtraField,
       removeExtraField,
       hideField,
+      setTemplateDefault,
       // upload modal
       uploadOpen,
       openUpload,
@@ -366,6 +399,7 @@ export function AppProvider({ children }) {
       updateExtraField,
       removeExtraField,
       hideField,
+      setTemplateDefault,
       uploadOpen,
       openUpload,
       closeUpload,

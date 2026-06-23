@@ -5,13 +5,11 @@ import { getHealth } from '../lib/api'
 
 // Maps the /api/health payload to a readiness chip shown before upload.
 function engineStatus(h) {
-  if (!h) return { tone: 'idle', text: 'Checking extraction engine…' }
-  if (h.error) return { tone: 'bad', text: 'Extraction service offline — run: uvicorn api.main:app --port 8000' }
-  if (h.ready) return { tone: 'ok', text: `Local VLM ready · ${h.model_arch}` }
-  if (!h.model_available) return { tone: 'bad', text: 'No model found — add a vision GGUF to models/' }
-  if (!h.model_supported) return { tone: 'bad', text: `Model '${h.model_arch}' unsupported — use Qwen2.5-VL` }
-  if (!h.mmproj_available) return { tone: 'bad', text: 'Vision projector (mmproj) missing in models/' }
-  return { tone: 'bad', text: 'Extraction engine not ready' }
+  if (!h) return { tone: 'idle', text: 'Се проверува OCR моторот…' }
+  if (h.error) return { tone: 'bad', text: 'Сервисот е офлајн — стартувај: uvicorn api.main:app --port 8000' }
+  if (h.ocr_ready) return { tone: 'ok', text: `OCR подготвен · EasyOCR · ${h.template_count || 0} шаблони` }
+  if (h.ready) return { tone: 'ok', text: 'Сервисот е подготвен · EasyOCR се вчитува…' }
+  return { tone: 'bad', text: 'Моторот за извлекување не е подготвен' }
 }
 
 const TONE_COLOR = { ok: '#0D5C44', bad: '#8B1A1A', idle: '#A0A0B2' }
@@ -39,6 +37,7 @@ const STATUS_ICON = {
 }
 
 const STATUS_COLOR = { waiting: '#A0A0B2', analyzing: '#1A1A6E', done: '#0D5C44', error: '#8B1A1A' }
+const STATUS_LABEL = { waiting: 'Чека', analyzing: 'Се анализира', done: 'Завршено', error: 'Грешка' }
 
 export default function UploadModal() {
   const navigate = useNavigate()
@@ -119,7 +118,7 @@ export default function UploadModal() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F0F0EC' }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#16161F' }}>
-            {!batchMode ? 'Upload invoices' : batchAllDone ? 'Analysis complete' : 'Analyzing invoices…'}
+            {!batchMode ? 'Прикачи фактури' : batchAllDone ? 'Анализата е завршена' : 'Се анализираат фактури…'}
           </div>
           <button onClick={closeUpload} style={{ background: 'none', border: 'none', color: '#A0A0B2', padding: 4, display: 'flex' }} onMouseEnter={(e) => (e.currentTarget.style.color = '#16161F')} onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0B2')}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -145,10 +144,10 @@ export default function UploadModal() {
                     <path d="M2.6 10.4v2.2a1 1 0 001 1h8.8a1 1 0 001-1v-2.2" strokeLinecap="round" />
                   </svg>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#16161F', textAlign: 'center' }}>Drag &amp; drop invoices here</div>
-                <div style={{ fontSize: 12.5, color: '#8A8A9C', textAlign: 'center', marginTop: 4 }}>PDF, PNG or JPG · multiple files supported · processed locally</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#16161F', textAlign: 'center' }}>Повлечи и пушти фактури овде</div>
+                <div style={{ fontSize: 12.5, color: '#8A8A9C', textAlign: 'center', marginTop: 4 }}>PDF, PNG или JPG · поддржани повеќе датотеки · обработено локално</div>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                  <button onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ background: '#1A1A6E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#13134f')} onMouseLeave={(e) => (e.currentTarget.style.background = '#1A1A6E')}>Browse files</button>
+                  <button onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ background: '#1A1A6E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#13134f')} onMouseLeave={(e) => (e.currentTarget.style.background = '#1A1A6E')}>Прелистај датотеки</button>
                 </div>
                 <input ref={fileInputRef} type="file" accept=".pdf,image/png,image/jpeg,image/jpg,image/webp" onChange={onPickFile} multiple style={{ display: 'none' }} />
               </div>
@@ -164,12 +163,12 @@ export default function UploadModal() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div style={{ fontSize: 12.5, color: '#5A5A6E' }}>
-                  {processedCount} / {totalCount} complete
-                  {analyzingCount > 0 && <span style={{ color: '#1A1A6E', fontWeight: 600 }}> · analyzing…</span>}
+                  {processedCount} / {totalCount} завршено
+                  {analyzingCount > 0 && <span style={{ color: '#1A1A6E', fontWeight: 600 }}> · се анализира…</span>}
                 </div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F4F4FB', border: '1px solid #E6E6F4', borderRadius: 6, padding: '5px 10px' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1A1A6E', animation: 'pulseDot 1s infinite' }} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#2E2E9E', letterSpacing: '0.04em' }}>ON-DEVICE · NO NETWORK</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#2E2E9E', letterSpacing: '0.04em' }}>НА УРЕДОТ · БЕЗ МРЕЖА</span>
                 </div>
               </div>
 
@@ -190,7 +189,7 @@ export default function UploadModal() {
                       )}
                     </div>
                     <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: STATUS_COLOR[item.status], flexShrink: 0 }}>
-                      {item.status === 'waiting' ? 'Waiting' : item.status === 'analyzing' ? 'Analyzing' : item.status === 'done' ? 'Done' : 'Error'}
+                      {STATUS_LABEL[item.status] || item.status}
                     </div>
                   </div>
                 ))}
@@ -211,12 +210,12 @@ export default function UploadModal() {
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#16161F' }}>
-                    {doneCount} of {totalCount} invoice{totalCount !== 1 ? 's' : ''} ready
+                    {doneCount} од {totalCount} {totalCount !== 1 ? 'фактури' : 'фактура'} подготвени
                   </div>
                   <div style={{ fontSize: 12, color: '#8A8A9C', marginTop: 1 }}>
-                    {doneCount > 0 && `${doneCount} extracted`}
+                    {doneCount > 0 && `${doneCount} извлечени`}
                     {doneCount > 0 && errorCount > 0 && ' · '}
-                    {errorCount > 0 && <span style={{ color: '#8B1A1A' }}>{errorCount} failed</span>}
+                    {errorCount > 0 && <span style={{ color: '#8B1A1A' }}>{errorCount} неуспешни</span>}
                   </div>
                 </div>
               </div>
@@ -234,10 +233,10 @@ export default function UploadModal() {
               )}
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={startNewBatch} style={{ flex: 1, background: '#fff', color: '#3A3A52', border: '1px solid #E2E2DC', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F7F7F5')} onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>New batch</button>
+                <button onClick={startNewBatch} style={{ flex: 1, background: '#fff', color: '#3A3A52', border: '1px solid #E2E2DC', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F7F7F5')} onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>Нова серија</button>
                 {doneCount > 0 && (
                   <button onClick={startReview} style={{ flex: 2, background: '#1A1A6E', color: '#fff', border: 'none', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 600 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#13134f')} onMouseLeave={(e) => (e.currentTarget.style.background = '#1A1A6E')}>
-                    Start review ({doneCount}) →
+                    Започни преглед ({doneCount}) →
                   </button>
                 )}
               </div>

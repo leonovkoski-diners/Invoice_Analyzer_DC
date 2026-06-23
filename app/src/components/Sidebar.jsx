@@ -46,7 +46,6 @@ export default function Sidebar() {
 
   const onDashboard = pathname === '/'
   const onInvoices = pathname === '/invoices' || pathname.startsWith('/invoices/')
-  const onPayments = pathname === '/payments'
   const onTemplates = pathname === '/templates'
 
   return (
@@ -62,13 +61,13 @@ export default function Sidebar() {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em', color: '#16161F' }}>Invoice Analyzer</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A0A0B2', marginTop: 1 }}>OCR · Templates</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A0A0B2', marginTop: 1 }}>OCR · Шаблони</div>
           </div>
         </div>
       </div>
 
       <nav style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#B4B4C2', padding: '6px 10px 8px' }}>Workspace</div>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#B4B4C2', padding: '6px 10px 8px' }}>Работен простор</div>
 
         <button onClick={() => navigate('/')} style={onDashboard ? navActive : navBase}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -77,7 +76,7 @@ export default function Sidebar() {
             <rect x="1.5" y="9.3" width="5.2" height="5.2" rx="1" />
             <rect x="9.3" y="9.3" width="5.2" height="5.2" rx="1" />
           </svg>
-          <span>Dashboard</span>
+          <span>Контролна табла</span>
         </button>
 
         <button onClick={() => navigate('/invoices')} style={onInvoices ? navActive : navBase}>
@@ -85,16 +84,8 @@ export default function Sidebar() {
             <path d="M2 3.5h12M2 8h12M2 12.5h12" />
             <circle cx="2" cy="3.5" r="0.4" fill="currentColor" />
           </svg>
-          <span>Invoices</span>
+          <span>Фактури</span>
           <span style={countStyle(onInvoices)}>{invoices.length}</span>
-        </button>
-
-        <button onClick={() => navigate('/payments')} style={onPayments ? navActive : navBase}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="1.6" y="2.8" width="12.8" height="11" rx="1.4" />
-            <path d="M1.6 6.2h12.8M4.5 1.4v2.4M11.5 1.4v2.4" />
-          </svg>
-          <span>Payment Run</span>
         </button>
 
         <button onClick={() => navigate('/templates')} style={onTemplates ? navActive : navBase}>
@@ -102,7 +93,7 @@ export default function Sidebar() {
             <rect x="2" y="2" width="12" height="12" rx="1.5" />
             <path d="M5 5h6M5 8h4M5 11h3" strokeLinecap="round" />
           </svg>
-          <span>Templates</span>
+          <span>Шаблони</span>
           <span style={countStyle(onTemplates)}>{templateCount}</span>
         </button>
       </nav>
@@ -117,20 +108,20 @@ export default function Sidebar() {
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="1.6">
             <path d="M8 11V3M4.6 6.2L8 2.8l3.4 3.4M3 12.6h10" />
           </svg>
-          Upload Invoice
+          Прикачи фактура
         </button>
 
         <div style={{ marginTop: 14, padding: '11px 12px', border: '1px solid #EDEDE7', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#EAEAF6', color: '#1A1A6E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, flexShrink: 0 }}>MK</div>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#EAEAF6', color: '#1A1A6E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12, flexShrink: 0 }}>LN</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#16161F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>M. Kovač</div>
-            <div style={{ fontSize: 11, color: '#A0A0B2', whiteSpace: 'nowrap' }}>Finance Operations</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#16161F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>L. Novkoski</div>
+            <div style={{ fontSize: 11, color: '#A0A0B2', whiteSpace: 'nowrap' }}>Финансиски операции</div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '0 4px' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#0D5C44', flexShrink: 0 }} />
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: '0.06em', color: '#8A8A9C' }}>100% LOCAL · NO DATA EGRESS</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: '0.06em', color: '#8A8A9C' }}>100% ЛОКАЛНО · БЕЗ ИСПРАЌАЊЕ ПОДАТОЦИ</span>
         </div>
       </div>
     </aside>

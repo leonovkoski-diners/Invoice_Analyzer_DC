@@ -5,12 +5,20 @@ import { fmtDate, fmtMoney } from '../lib/format'
 import StatusBadge from '../components/StatusBadge'
 import FlagBadge from '../components/FlagBadge'
 
-const STATUS_OPTS = ['All', 'Pending', 'Processing', 'Approved', 'Exported', 'Rejected']
+// value = internal status key, label = displayed text
+const STATUS_OPTS = [
+  { value: 'All',        label: 'Сите' },
+  { value: 'Pending',    label: 'На чекање' },
+  { value: 'Processing', label: 'Во обработка' },
+  { value: 'Approved',   label: 'Одобрени' },
+  { value: 'Exported',   label: 'Извезени' },
+  { value: 'Rejected',   label: 'Одбиени' },
+]
 const DATE_OPTS = [
-  ['All', 'All dates'],
-  ['7d', 'Last 7 days'],
-  ['month', 'This month'],
-  ['overdue', 'Overdue'],
+  ['All',     'Сите датуми'],
+  ['7d',      'Последни 7 дена'],
+  ['month',   'Овој месец'],
+  ['overdue', 'Задоцнети'],
 ]
 
 const pillBase = { display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #E2E2DC', background: '#fff', borderRadius: 7, padding: '7px 11px', fontSize: 12.5, fontWeight: 500, color: '#5A5A6E' }
@@ -66,16 +74,16 @@ export default function Invoices() {
             <circle cx="7" cy="7" r="5" />
             <path d="M10.8 10.8L14 14" strokeLinecap="round" />
           </svg>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search vendor or invoice no." style={{ border: 'none', outline: 'none', background: 'none', fontSize: 13, color: '#16161F', width: '100%' }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Пребарај добавувач или бр. фактура" style={{ border: 'none', outline: 'none', background: 'none', fontSize: 13, color: '#16161F', width: '100%' }} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          {STATUS_OPTS.map((st) => {
-            const active = statusFilter === st
+          {STATUS_OPTS.map(({ value, label }) => {
+            const active = statusFilter === value
             return (
-              <button key={st} onClick={() => setStatusFilter(st)} style={active ? pillActive : pillBase}>
-                {st}
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: '0px 5px', borderRadius: 8, background: active ? 'rgba(255,255,255,0.2)' : '#F0F0EC', color: active ? '#fff' : '#8A8A9C' }}>{statusCounts[st]}</span>
+              <button key={value} onClick={() => setStatusFilter(value)} style={active ? pillActive : pillBase}>
+                {label}
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: '0px 5px', borderRadius: 8, background: active ? 'rgba(255,255,255,0.2)' : '#F0F0EC', color: active ? '#fff' : '#8A8A9C' }}>{statusCounts[value]}</span>
               </button>
             )
           })}
@@ -93,13 +101,13 @@ export default function Invoices() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#FBFBFA' }}>
-              <th style={th}>Vendor</th>
-              <th style={th}>Invoice no.</th>
-              <th style={th}>Date</th>
-              <th style={th}>Due</th>
-              <th style={{ ...th, textAlign: 'right' }}>Amount</th>
-              <th style={th}>Status</th>
-              <th style={th}>Flags</th>
+              <th style={th}>Добавувач</th>
+              <th style={th}>Бр. фактура</th>
+              <th style={th}>Датум</th>
+              <th style={th}>Доспевање</th>
+              <th style={{ ...th, textAlign: 'right' }}>Износ</th>
+              <th style={th}>Статус</th>
+              <th style={th}>Флагови</th>
             </tr>
           </thead>
           <tbody>
@@ -131,12 +139,12 @@ export default function Invoices() {
         </table>
         {rows.length === 0 && (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 14, color: '#5A5A6E', fontWeight: 600 }}>No invoices match your filters</div>
-            <button onClick={clearFilters} style={{ marginTop: 10, background: 'none', border: '1px solid #E2E2DC', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, color: '#2E2E9E', fontWeight: 600 }}>Clear filters</button>
+            <div style={{ fontSize: 14, color: '#5A5A6E', fontWeight: 600 }}>Нема фактури кои одговараат на филтрите</div>
+            <button onClick={clearFilters} style={{ marginTop: 10, background: 'none', border: '1px solid #E2E2DC', borderRadius: 7, padding: '7px 14px', fontSize: 12.5, color: '#2E2E9E', fontWeight: 600 }}>Исчисти филтри</button>
           </div>
         )}
       </div>
-      <div style={{ marginTop: 10, fontSize: 12, color: '#A0A0B2', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em' }}>{rows.length} of {invoices.length} invoices</div>
+      <div style={{ marginTop: 10, fontSize: 12, color: '#A0A0B2', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em' }}>{rows.length} од {invoices.length} фактури</div>
     </div>
   )
 }

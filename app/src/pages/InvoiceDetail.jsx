@@ -22,6 +22,7 @@ export default function InvoiceDetail() {
   const {
     invoices, approveInvoice, rejectInvoice, exportInvoice,
     setBookingDate, updateJournal, updateField, addExtraField, updateExtraField, removeExtraField, hideField,
+    setTemplateDefault,
     batchMode, batchDoneItems, batchCursor, batchNavNext, batchNavPrev,
     pushToast,
   } = useApp()
@@ -115,10 +116,10 @@ export default function InvoiceDetail() {
         },
       })
       setTemplateSaved(true)
-      pushToast('ok', 'Template saved', `"${templateName.trim()}" will be used for future invoices`)
+      pushToast('ok', 'Шаблонот е зачуван', `"${templateName.trim()}" ќе се користи за идни фактури`)
       setTimeout(() => setSaveTemplateOpen(false), 1200)
     } catch {
-      pushToast('error', 'Save failed', 'Could not save template — check backend connection')
+      pushToast('error', 'Неуспешно зачувување', 'Не може да се зачува шаблонот — провери ја врската со серверот')
     } finally {
       setSavingTemplate(false)
     }
@@ -131,20 +132,30 @@ export default function InvoiceDetail() {
   const hidden = new Set(invoice.hiddenFields || [])
   const stdField = (f) => hidden.has(f.label) ? null : { ...f, onRemove: () => hideField(invoice.id, f.label) }
 
+  // Pin helpers — only active when this invoice matched a vendor template
+  const canPin = !!invoice.templateUsed
+  const td = invoice.templateDefaults || {}
+  const pinProps = (defaultKey, getValue) => !canPin ? {} : {
+    pinnable: true,
+    pinned: !!td[defaultKey],
+    onPin: () => setTemplateDefault(invoice.id, invoice.templateUsed, defaultKey, getValue()),
+    onUnpin: () => setTemplateDefault(invoice.id, invoice.templateUsed, defaultKey, null),
+  }
+
   const fields = [
-    stdField({ label: 'Vendor', value: invoice.vendor || '', editable: true, onChange: (v) => updateField(invoice.id, 'vendor', v) }),
-    stdField({ label: 'Komitent', value: invoice.komitent || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitent', v), flagged: invoice.komitentLowConfidence }),
-    stdField({ label: 'Komitent sifra', value: invoice.komitentSifra || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitentSifra', v) }),
-    stdField({ label: 'Invoice number', value: invoice.number || '', editable: true, onChange: (v) => updateField(invoice.id, 'number', v) }),
+    stdField({ label: 'Добавувач', value: invoice.vendor || '', editable: true, onChange: (v) => updateField(invoice.id, 'vendor', v), ...pinProps('vendor_name', () => invoice.vendor) }),
+    stdField({ label: 'Комитент', value: invoice.komitent || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitent', v), flagged: invoice.komitentLowConfidence, ...pinProps('komitent_name', () => invoice.komitent) }),
+    stdField({ label: 'Шифра на комитент', value: invoice.komitentSifra || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitentSifra', v), ...pinProps('komitent_sifra', () => invoice.komitentSifra) }),
+    stdField({ label: 'Број на фактура', value: invoice.number || '', editable: true, onChange: (v) => updateField(invoice.id, 'number', v) }),
     stdField({
-      label: 'Invoice date',
+      label: 'Датум на фактура',
       value: isoDate(invoice.invoiceDate),
       editable: true,
       inputType: 'date',
       onChange: (v) => updateField(invoice.id, 'invoiceDate', v),
       flagged: d.dateFlag || (invoice.invoiceDate && !isoDate(invoice.invoiceDate)),
     }),
-    stdField({ label: 'Total amount', value: fmtMoney(invoice.total), flagged: !d.totalOk }),
+    stdField({ label: 'Вкупен износ', value: fmtMoney(invoice.total), flagged: !d.totalOk }),
     ...(invoice.extra || []).map((e, idx) => ({
       label: e.key,
       value: e.value,
@@ -175,13 +186,13 @@ export default function InvoiceDetail() {
           onMouseLeave={(e) => (e.currentTarget.style.color = '#8A8A9C')}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M9.5 3.5L5 8l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Back to invoices
+          Назад кон фактури
         </button>
         {!inBatch && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={goPrev} disabled={!inNonBatchQueue || qPos === 0} style={queueBtn(!inNonBatchQueue || qPos === 0)}>‹ Previous</button>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: '#5A5A6E', minWidth: 78, textAlign: 'center' }}>{inNonBatchQueue ? `${qPos + 1} of ${nonBatchQueue.length} pending` : 'Reviewed'}</span>
-            <button onClick={goNext} disabled={!inNonBatchQueue || qPos >= nonBatchQueue.length - 1} style={queueBtn(!inNonBatchQueue || qPos >= nonBatchQueue.length - 1)}>Next ›</button>
+            <button onClick={goPrev} disabled={!inNonBatchQueue || qPos === 0} style={queueBtn(!inNonBatchQueue || qPos === 0)}>‹ Претходна</button>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: '#5A5A6E', minWidth: 78, textAlign: 'center' }}>{inNonBatchQueue ? `${qPos + 1} од ${nonBatchQueue.length} на чекање` : 'Прегледана'}</span>
+            <button onClick={goNext} disabled={!inNonBatchQueue || qPos >= nonBatchQueue.length - 1} style={queueBtn(!inNonBatchQueue || qPos >= nonBatchQueue.length - 1)}>Следна ›</button>
           </div>
         )}
       </div>
@@ -201,7 +212,7 @@ export default function InvoiceDetail() {
               {d.fileName}
             </span>
             <span style={{ color: '#D0D0D8' }}>·</span>
-            <span>Received {d.receivedFmt}</span>
+            <span>Примено {d.receivedFmt}</span>
             {invoice.templateName && (
               <>
                 <span style={{ color: '#D0D0D8' }}>·</span>
@@ -218,7 +229,7 @@ export default function InvoiceDetail() {
                   onClick={() => setOcrOpen((v) => !v)}
                   style={{ background: 'none', border: 'none', padding: '2px 0', fontSize: 11.5, color: '#8A8A9C', fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' }}
                 >
-                  {ocrOpen ? 'hide OCR text' : 'show OCR text'}
+                  {ocrOpen ? 'сокриј OCR текст' : 'прикажи OCR текст'}
                 </button>
               </>
             )}
@@ -229,7 +240,7 @@ export default function InvoiceDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid #E2E2DC', borderRadius: 8, padding: '7px 11px', fontSize: 12.5, color: '#5A5A6E' }}>
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#8A8A9C" strokeWidth="1.5"><rect x="1.6" y="2.8" width="12.8" height="11" rx="1.4" /><path d="M1.6 6.2h12.8M4.5 1.4v2.4M11.5 1.4v2.4" /></svg>
-              Booking
+              Книжење
               <input type="date" value={invoice.bookingDate || ''} onChange={(e) => setBookingDate(invoice.id, e.target.value)} style={{ border: 'none', outline: 'none', background: 'none', fontSize: 12.5, color: '#16161F', fontFamily: 'inherit' }} />
             </label>
             {invoice.ocrText && (
@@ -239,32 +250,32 @@ export default function InvoiceDetail() {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #C8C8E0', background: '#fff', color: '#1A1A6E', borderRadius: 8, padding: '9px 13px', fontSize: 12.5, fontWeight: 600 }}
               >
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5" /><path d="M5 5h6M5 8h4M5 11h3" strokeLinecap="round" /></svg>
-                Save as Template
+                Зачувај како шаблон
               </button>
             )}
             <button onClick={handleReject} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid #E6C9C9', background: '#fff', color: '#8B1A1A', borderRadius: 8, padding: '10px 16px', fontSize: 13, fontWeight: 600 }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" /></svg>
-              Reject
+              Одбиј
             </button>
             <button onClick={handleApprove} style={approveBtnStyle}>
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3.5 8.2l3 3 6-6.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              {posted ? 'Approved' : 'Approve'}
+              {posted ? 'Одобрена' : 'Одобри'}
             </button>
           </div>
           {posted && (
             <button onClick={() => exportInvoice(invoice.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid #C8C8E0', background: '#fff', color: '#1A1A6E', borderRadius: 8, padding: '8px 14px', fontSize: 12.5, fontWeight: 600 }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 1.6h7l3 3v9.8H3z" /><path d="M5.6 8.4l1.8 1.8 3-3.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              {invoice.status === 'Exported' ? 'Re-export .xlsx' : 'Export → Helix-K'}
+              {invoice.status === 'Exported' ? 'Повторно извези .xlsx' : 'Извези → Helix-K'}
             </button>
           )}
-          {d.hasHigh && !posted && <div style={{ fontSize: 11, color: '#8B1A1A', fontWeight: 500 }}>Resolve critical flags to approve</div>}
+          {d.hasHigh && !posted && <div style={{ fontSize: 11, color: '#8B1A1A', fontWeight: 500 }}>Реши ги критичните флагови за да одобриш</div>}
 
           {/* Save as Template inline panel */}
           {saveTemplateOpen && (
             <div style={{ background: '#F8F8FC', border: '1px solid #C8C8E0', borderRadius: 10, padding: '14px 16px', width: 320, marginTop: 2 }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9A9AAC', marginBottom: 10 }}>Save as Template</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9A9AAC', marginBottom: 10 }}>Зачувај како шаблон</div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 11, color: '#8A8A9C', marginBottom: 3 }}>Template name</div>
+                <div style={{ fontSize: 11, color: '#8A8A9C', marginBottom: 3 }}>Име на шаблонот</div>
                 <input
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
@@ -273,7 +284,7 @@ export default function InvoiceDetail() {
                 />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: '#8A8A9C', marginBottom: 3 }}>Keywords (comma-separated, used to match future invoices)</div>
+                <div style={{ fontSize: 11, color: '#8A8A9C', marginBottom: 3 }}>Клучни зборови (одделени со запирка, за препознавање идни фактури)</div>
                 <input
                   value={templateKeywords}
                   onChange={(e) => setTemplateKeywords(e.target.value)}
@@ -283,14 +294,14 @@ export default function InvoiceDetail() {
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setSaveTemplateOpen(false)} style={{ border: '1px solid #E2E2DC', background: '#fff', color: '#5A5A6E', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
-                  Cancel
+                  Откажи
                 </button>
                 <button
                   onClick={handleSaveTemplate}
                   disabled={savingTemplate || !templateName.trim()}
                   style={{ border: 'none', background: templateSaved ? '#0D5C44' : '#1A1A6E', color: '#fff', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: savingTemplate ? 'wait' : 'pointer', opacity: !templateName.trim() ? 0.5 : 1 }}
                 >
-                  {templateSaved ? '✓ Saved' : savingTemplate ? 'Saving…' : 'Save Template'}
+                  {templateSaved ? '✓ Зачувано' : savingTemplate ? 'Се зачувува…' : 'Зачувај шаблон'}
                 </button>
               </div>
             </div>
@@ -301,7 +312,7 @@ export default function InvoiceDetail() {
       {/* Flags */}
       {d.hasFlags && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ ...sectionLabel, marginBottom: 8 }}>Validation flags · {d.flagCount}</div>
+          <div style={{ ...sectionLabel, marginBottom: 8 }}>Флагови за валидација · {d.flagCount}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {d.flags.map((f, idx) => (
               <div key={idx} style={{ borderLeft: f.isHigh ? '3px solid #8B1A1A' : '3px solid #7A4100', background: f.isHigh ? '#FDEBEB' : '#FEF3E2', borderRadius: '0 8px 8px 0', padding: '12px 16px' }}>
@@ -320,8 +331,8 @@ export default function InvoiceDetail() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.05fr) minmax(0,1fr)', gap: 18, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={sectionLabel}>Extracted data</div>
-            <div style={{ fontSize: 10.5, color: '#B4B4C2', fontStyle: 'italic', fontFamily: "'Lora', serif" }}>— verify against the document on the right</div>
+            <div style={sectionLabel}>Извлечени податоци</div>
+            <div style={{ fontSize: 10.5, color: '#B4B4C2', fontStyle: 'italic', fontFamily: "'Lora', serif" }}>— верификувај со документот десно</div>
           </div>
 
           <JournalEditor invoice={invoice} onChange={(entries) => updateJournal(invoice.id, entries)} />
@@ -331,16 +342,16 @@ export default function InvoiceDetail() {
           {/* Total verification — independently recomputed from line items (tolerance 0.01 ден.) */}
           <div style={{ background: '#fff', border: '1px solid #E8E8E2', borderRadius: 10, padding: '6px 16px' }}>
             <div style={totalRow}>
-              <span style={{ fontSize: 12.5, color: '#8A8A9C' }}>Σ line items (recomputed)</span>
+              <span style={{ fontSize: 12.5, color: '#8A8A9C' }}>Σ ставки (пресметано)</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={d.totalOk ? okTag : badTag}>{d.totalOk ? 'MATCH' : 'MISMATCH'}</span>
+                <span style={d.totalOk ? okTag : badTag}>{d.totalOk ? 'СОВПАЃА' : 'НЕ СОВПАЃА'}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#16161F', fontVariantNumeric: 'tabular-nums' }}>{d.liSum}</span>
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0 9px' }}>
-              <span style={{ fontSize: 13, color: '#16161F', fontWeight: 600 }}>Total amount</span>
+              <span style={{ fontSize: 13, color: '#16161F', fontWeight: 600 }}>Вкупен износ</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={d.totalOk ? okTag : badTag}>{d.totalOk ? 'VERIFIED' : 'MISMATCH'}</span>
+                <span style={d.totalOk ? okTag : badTag}>{d.totalOk ? 'ВЕРИФИЦИРАНО' : 'НЕ СОВПАЃА'}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 16, color: '#1A1A6E', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{d.totalFmt}</span>
               </span>
             </div>
@@ -355,7 +366,7 @@ export default function InvoiceDetail() {
       {ocrOpen && invoice.ocrText && (
         <div style={{ marginTop: 20, border: '1px solid #E8E8E2', borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#F8F8F4', borderBottom: '1px solid #E8E8E2' }}>
-            <span style={{ ...sectionLabel }}>Raw OCR text</span>
+            <span style={{ ...sectionLabel }}>Суров OCR текст</span>
             <button
               onClick={() => setOcrOpen(false)}
               style={{ background: 'none', border: 'none', color: '#9A9AAC', fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: '0 4px' }}

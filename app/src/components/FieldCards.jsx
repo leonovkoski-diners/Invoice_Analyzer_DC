@@ -1,10 +1,31 @@
-// Renders extracted fields as a responsive card grid.
-// Pass editable: true + onChange to make a card's value inline-editable.
-// Pass labelEditable: true + onLabelChange for custom fields whose key is also editable.
-// Pass onRemove to show a × remove button on a card.
-// Pass onAddField to render a "+" card that adds a new custom field.
+import { useState } from 'react'
+
+function PinButton({ onPin }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onPin}
+      title="Постави како стандардно за овој добавувач"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'absolute', top: 5, right: 5, width: 18, height: 18,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: hovered ? '#EEEEF8' : 'none', border: 'none',
+        color: '#1A1A6E', opacity: hovered ? 1 : 0.22, cursor: 'pointer',
+        padding: 0, borderRadius: 3, transition: 'opacity 0.15s, background 0.15s',
+      }}
+    >
+      <svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M8 1l3 3v3l2 2H3l2-2V4z" strokeLinejoin="round" />
+        <path d="M8 9v6" strokeLinecap="round" />
+      </svg>
+    </button>
+  )
+}
+
 export default function FieldCards({ fields, onAddField }) {
-  const borderLeft = (f) => f.flagged ? '3px solid #7A4100' : '3px solid #1A1A6E'
+  const borderLeft = (f) => f.flagged ? '3px solid #7A4100' : (f.pinned ? '3px solid #1A1A6E' : '3px solid #1A1A6E')
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
@@ -12,8 +33,8 @@ export default function FieldCards({ fields, onAddField }) {
         <div
           key={idx}
           style={{
-            background: '#fff',
-            border: '1px solid #E8E8E2',
+            background: f.pinned ? '#F8F8FC' : '#fff',
+            border: f.pinned ? '1px solid #C8C8E0' : '1px solid #E8E8E2',
             borderLeft: borderLeft(f),
             borderRadius: 10,
             padding: '12px 14px',
@@ -21,11 +42,11 @@ export default function FieldCards({ fields, onAddField }) {
             position: 'relative',
           }}
         >
-          {/* Remove button */}
+          {/* Remove button (custom extra fields only) */}
           {f.onRemove && (
             <button
               onClick={f.onRemove}
-              title="Remove field"
+              title="Отстрани поле"
               style={{
                 position: 'absolute',
                 top: 6,
@@ -52,13 +73,49 @@ export default function FieldCards({ fields, onAddField }) {
             </button>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingRight: f.onRemove ? 16 : 0 }}>
+          {/* Lock icon — shown when field has a saved template default */}
+          {f.pinned && (
+            <button
+              onClick={f.onUnpin}
+              title="Стандардна вредност — кликни за бришење"
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                width: 18,
+                height: 18,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                color: '#1A1A6E',
+                cursor: 'pointer',
+                padding: 0,
+                borderRadius: 3,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#8B1A1A'; e.currentTarget.style.background = '#FDEBEB' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#1A1A6E'; e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="7.5" width="10" height="7.5" rx="1.5" />
+                <path d="M5 7.5V5a3 3 0 0 1 6 0v2.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+
+          {/* Pin icon — shown on hover when field is pinnable but not yet pinned */}
+          {f.pinnable && !f.pinned && (
+            <PinButton onPin={f.onPin} />
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingRight: (f.onRemove || f.pinnable || f.pinned) ? 16 : 0 }}>
             {f.labelEditable ? (
               <input
                 type="text"
                 value={f.label}
                 onChange={(e) => f.onLabelChange && f.onLabelChange(e.target.value)}
-                placeholder="Field name"
+                placeholder="Назив на поле"
                 style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: 9,
@@ -87,7 +144,7 @@ export default function FieldCards({ fields, onAddField }) {
               type={f.inputType || 'text'}
               value={f.value == null ? '' : String(f.value)}
               onChange={(e) => f.onChange && f.onChange(e.target.value)}
-              placeholder={f.labelEditable ? 'Value…' : undefined}
+              placeholder={f.labelEditable ? 'Вредност…' : undefined}
               style={{
                 display: 'block',
                 width: '100%',
@@ -119,7 +176,7 @@ export default function FieldCards({ fields, onAddField }) {
       {onAddField && (
         <button
           onClick={onAddField}
-          title="Add custom field"
+          title="Додај поле"
           style={{
             background: '#F7F7FB',
             border: '1.5px dashed #C8C8E0',
@@ -140,7 +197,7 @@ export default function FieldCards({ fields, onAddField }) {
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M8 3v10M3 8h10" strokeLinecap="round" />
           </svg>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Add field</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Додај поле</span>
         </button>
       )}
     </div>
