@@ -67,11 +67,11 @@ export async function saveTemplate(template) {
   return res.json() // { template: {...} }
 }
 
-export async function saveTemplateFromInvoice({ display_name, keywords, ocr_text, extracted }) {
+export async function saveTemplateFromInvoice({ display_name, keywords, ocr_text, extracted, defaults }) {
   const res = await fetch(`${API_BASE}/api/templates/save-from-invoice`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ display_name, keywords, ocr_text, extracted }),
+    body: JSON.stringify({ display_name, keywords, ocr_text, extracted, defaults }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -106,6 +106,18 @@ export async function setTemplateDefault(templateId, field, value) {
     throw new Error(err.detail || `Failed to save default (${res.status})`)
   }
   return res.json() // { template: {...} }
+}
+
+// Lookup a komitent by exact sifra (ID) or fuzzy name.
+// Returns { id, name } or null.
+export async function lookupKomitent({ sifra, name } = {}) {
+  const params = new URLSearchParams()
+  if (sifra) params.set('sifra', sifra)
+  if (name) params.set('name', name)
+  const res = await fetch(`${API_BASE}/api/komitent/lookup?${params}`)
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.match || null
 }
 
 export async function deleteTemplate(id) {

@@ -229,6 +229,27 @@ async def ocr_text_only(file: UploadFile = File(...)) -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# Routes — komitent lookup
+# ---------------------------------------------------------------------------
+
+@app.get("/api/komitent/lookup")
+def komitent_lookup_route(sifra: Optional[str] = None, name: Optional[str] = None) -> dict[str, Any]:
+    """Lookup a komitent by exact sifra (ID) or fuzzy name.
+    Returns { match: {id, name} } or { match: null }.
+    """
+    from pipeline.lookup import get_komitent_lookup
+    lookup = get_komitent_lookup()
+    if sifra and sifra.strip():
+        result = lookup.lookup_by_id(sifra.strip())
+        return {"match": result}
+    if name and name.strip():
+        result = lookup.match(name.strip())
+        if result:
+            return {"match": {"id": result["id"], "name": result["name"]}}
+    return {"match": None}
+
+
+# ---------------------------------------------------------------------------
 # Routes — vendor templates CRUD
 # ---------------------------------------------------------------------------
 
@@ -285,29 +306,53 @@ def analyze_keyword_route(body: dict = Body(...)) -> dict[str, Any]:
 
 @app.post("/api/templates/{template_id}/defaults")
 def set_template_default(template_id: str, body: dict = Body(...)) -> dict[str, Any]:
-    """Set or clear a single default value for a vendor template field."""
+    """Set or clear default values for a vendor template field.
+
+    Accepts two formats:
+    - Single field: { "field": "vendor_name", "value": "..." }
+    - Batch:        { "defaults": { "vendor_name": "...", "komitent_name": "..." } }
+    """
     _ALLOWED = {"vendor_name", "komitent_name", "komitent_sifra"}
-    field = body.get("field")
-    value = body.get("value")  # None/null clears the default
-    if not field or field not in _ALLOWED:
-        raise HTTPException(status_code=422, detail=f"field must be one of {sorted(_ALLOWED)}")
+
     templates = load_templates()
     idx = next((i for i, t in enumerate(templates) if t["id"] == template_id), None)
     if idx is None:
         raise HTTPException(status_code=404, detail=f"Template '{template_id}' not found")
     tmpl = dict(templates[idx])
     d = dict(tmpl.get("defaults", {}))
-    if value:
-        d[field] = value
+
+    if "defaults" in body:
+        # Batch mode
+        updates = body["defaults"]
+        if not isinstance(updates, dict):
+            raise HTTPException(status_code=422, detail="defaults must be an object")
+        invalid = set(updates.keys()) - _ALLOWED
+        if invalid:
+            raise HTTPException(status_code=422, detail=f"Unknown default fields: {sorted(invalid)}")
+        for field, value in updates.items():
+            if value:
+                d[field] = value
+            else:
+                d.pop(field, None)
+        logger.info("Template '%s': batch defaults updated: %r", template_id, d)
     else:
-        d.pop(field, None)
+        # Single-field mode (used by pin/unpin in the review UI)
+        field = body.get("field")
+        value = body.get("value")
+        if not field or field not in _ALLOWED:
+            raise HTTPException(status_code=422, detail=f"field must be one of {sorted(_ALLOWED)}")
+        if value:
+            d[field] = value
+        else:
+            d.pop(field, None)
+        logger.info("Template '%s': default '%s' = %r", template_id, field, value)
+
     if d:
         tmpl["defaults"] = d
     elif "defaults" in tmpl:
         del tmpl["defaults"]
     templates[idx] = tmpl
     save_templates(templates)
-    logger.info("Template '%s': default '%s' = %r", template_id, field, value)
     return {"template": tmpl}
 
 
@@ -327,16 +372,30 @@ def save_template_from_invoice(body: dict = Body(...)) -> dict[str, Any]:
     keywords = body.get("keywords") or [display_name]
     ocr_text = body.get("ocr_text") or ""
     extracted = body.get("extracted") or {}
+    raw_defaults = body.get("defaults") or {}
 
     patterns = generate_template_patterns(ocr_text, extracted)
 
-    template = {
+    _ALLOWED = {"vendor_name", "komitent_name", "komitent_sifra"}
+    clean_defaults = {
+        k: str(v).strip()
+        for k, v in raw_defaults.items()
+        if k in _ALLOWED and v and str(v).strip()
+    }
+
+    template: dict[str, Any] = {
         "display_name": display_name,
         "keywords": [k for k in keywords if k and len(k.strip()) > 1],
         "currency": "MKD",
         "source": "user_saved",
         "patterns": patterns,
     }
+    if clean_defaults:
+        template["defaults"] = clean_defaults
+
     saved = upsert_template(template)
-    logger.info(f"User saved template '{display_name}' with {len(patterns)} auto-generated patterns")
+    logger.info(
+        "User saved template '%s' with %d patterns and defaults: %r",
+        display_name, len(patterns), clean_defaults,
+    )
     return {"template": saved}

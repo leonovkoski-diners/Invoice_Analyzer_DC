@@ -160,6 +160,14 @@ class KomitentLookup:
             logger.warning("KomitentLookup.scan_text failed: %s", exc)
             return None
 
+    def lookup_by_id(self, sifra: str) -> Optional[Dict]:
+        """Exact lookup by komitent ID (sifra). Returns {id, name} or None."""
+        target = sifra.strip()
+        for entry_id, entry_name in self._entries:
+            if entry_id == target:
+                return {"id": entry_id, "name": entry_name}
+        return None
+
     def match(self, vendor_name: str, threshold: int = 60) -> Optional[Dict]:
         """
         Fuzzy-match vendor_name against the komitent list.

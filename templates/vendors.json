@@ -1,19 +1,28 @@
 [
   {
+    "id": "8a3110ee",
     "display_name": "Адвокатско друштво Чукий и Марков",
+    "currency": "MKD",
     "keywords": [
       "Адвокатско друштво Чукий и Марков",
       "Advokatsko dru{tvo ^uki} i Markov"
     ],
-    "currency": "MKD",
-    "source": "user_saved",
     "patterns": {
+      "vendor_name": null,
+      "vendor_vat_id": null,
       "invoice_number": "Фактура\\ 6р\\.\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
-      "total": "ВКУПЕН\\ ИЗНОС\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Скопје;\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "due_date": null,
       "subtotal": "03/2024г\\ ,\\ \\ да\\ уплатите\\ износ\\ од\\s*[:\\-]?\\s*([\\d.,]+)",
-      "invoice_date": "Скопје;\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+      "tax_rate": null,
+      "tax_amount": null,
+      "total": "ВКУПЕН\\ ИЗНОС\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "payment_reference": null
     },
-    "id": "8a3110ee"
+    "keyword_hints": {},
+    "defaults": {
+      "komitent_sifra": "559"
+    }
   },
   {
     "display_name": "НИКОБ Обезбедување",
@@ -29,7 +38,12 @@
       "invoice_date": "лок\\ 5\\ Парк\\ РезиденсСкопје;\\ Датум\\ Датум\\ на\\ промет\\ 0\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
       "due_date": "Даночен\\ број\\ \\ 4030992100592\\ Рок\\ на\\ плакање\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
     },
-    "id": "e32909eb"
+    "id": "e32909eb",
+    "defaults": {
+      "vendor_name": "НИКОБ Обезбедување",
+      "komitent_name": "Nikob Obezbeduvawe",
+      "komitent_sifra": "880"
+    }
   },
   {
     "id": "be8f535a",
@@ -53,29 +67,12 @@
     },
     "keyword_hints": {
       "total": "ВКУПНО CЕ : "
-    }
-  },
-  {
-    "id": "dc1fae17",
-    "display_name": "KaSis",
-    "currency": "MKD",
-    "keywords": [
-      "KaSis",
-      "Kasis"
-    ],
-    "patterns": {
-      "vendor_name": null,
-      "vendor_vat_id": null,
-      "invoice_number": "Комплекс\\ Парк\\ Резиденс\\ брај\\ на\\ фактура\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
-      "invoice_date": "Анекс\\ 6р\\.1\\ ca\\ архбр\\ \\ за\\ КаСис\\ 03\\-1504/1\\ од\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
-      "due_date": null,
-      "subtotal": null,
-      "tax_rate": null,
-      "tax_amount": null,
-      "total": null,
-      "payment_reference": null
     },
-    "keyword_hints": {}
+    "defaults": {
+      "vendor_name": "TELIT DOO",
+      "komitent_name": "Telit Doo",
+      "komitent_sifra": "703"
+    }
   },
   {
     "display_name": "МАКЕДОНСКИ ТЕЛЕКОМ АД СКОПЈЕ Страна   Страна 1 од 2",
@@ -96,5 +93,81 @@
       "komitent_sifra": "001",
       "vendor_name": "МАКЕДОНСКИ ТЕЛЕКОМ АД СКОПЈЕ"
     }
+  },
+  {
+    "display_name": "KaSis",
+    "keywords": [
+      "KaSis",
+      "Kasis"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Комплекс\\ Парк\\ Резиденс\\ брај\\ на\\ фактура\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "invoice_date": "Анекс\\ 6р\\.1\\ ca\\ архбр\\ \\ за\\ КаСис\\ 03\\-1504/1\\ од\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "id": "2e29991b"
+  },
+  {
+    "display_name": "СТЈУАРТ ИНСПЕКТ дооел",
+    "keywords": [
+      "СТЈУАРТ ИНСПЕКТ дооел",
+      "Stjuart Inspekt"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "\\.\\ 1732\\ 6р\\.4\\ лок\\.5\\ \\(ул\\.\\ Столтенбергова\\ бр\\.\\ 4\\)\\-\\ Број\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "30\\ дена,\\ до\\ 14\\.Nov\\.2025\\ Вкупно\\ за\\ наплата\\ денари:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
+    },
+    "id": "a3ea25d8"
+  },
+  {
+    "id": "47f78466",
+    "display_name": "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+    "currency": "MKD",
+    "keywords": [
+      "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+      "Zonel"
+    ],
+    "patterns": {
+      "vendor_name": null,
+      "vendor_vat_id": null,
+      "invoice_number": "r\"ФАКТУРА[\\s\\S]{0,100}број\\s*[:\\-]?\\s*(\\d+)\"",
+      "invoice_date": "Датум\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "due_date": null,
+      "subtotal": null,
+      "tax_rate": null,
+      "tax_amount": null,
+      "total": "одржување\\ за\\ период\\ 1\\.0\\ 6,000\\.00\\ 6,000\\.00\\ 1,080\\.00\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "payment_reference": null
+    },
+    "keyword_hints": {
+      "invoice_number": "ФАКТУРА "
+    },
+    "defaults": {
+      "vendor_name": "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+      "komitent_name": "Zonel",
+      "komitent_sifra": "111"
+    }
+  },
+  {
+    "display_name": "Akton Communications",
+    "keywords": [
+      "Akton Communications",
+      "Akton telekomunikaciski in`iwering"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Фактура\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "тини\\ и\\ осумдесет\\ и\\ осум\\ MKD\\ \\ 00/10O\\ За\\ плайање\\ MKD\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
+    },
+    "defaults": {
+      "vendor_name": "Akton Communications",
+      "komitent_name": "Akton telekomunikaciski in`iwering",
+      "komitent_sifra": "1655"
+    },
+    "id": "8bb16d2b"
   }
 ]

@@ -42,7 +42,8 @@ export default function AnalyticsOverview() {
 
     const byCur = {}
     relevant.forEach((i) => {
-      byCur[i.currency] = (byCur[i.currency] || 0) + mkd(i)
+      const cur = i.currency || 'MKD'
+      byCur[cur] = (byCur[cur] || 0) + mkd(i)
     })
     const currency = Object.entries(byCur).map(([name, value]) => ({ name, value: Math.round(value) }))
 

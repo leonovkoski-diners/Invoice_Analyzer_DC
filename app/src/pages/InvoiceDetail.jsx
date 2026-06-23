@@ -1,9 +1,9 @@
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useApp } from '../state/appContext'
 import { buildDetail } from '../lib/invoice'
 import { fmtDate, fmtMoney } from '../lib/format'
-import { saveTemplateFromInvoice } from '../lib/api'
+import { saveTemplateFromInvoice, lookupKomitent } from '../lib/api'
 import StatusBadge from '../components/StatusBadge'
 import DocumentPreview from '../components/DocumentPreview'
 import JournalEditor from '../components/JournalEditor'
@@ -32,12 +32,35 @@ export default function InvoiceDetail() {
   const [templateKeywords, setTemplateKeywords] = useState('')
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [templateSaved, setTemplateSaved] = useState(false)
+  const sifraTimerRef = useRef(null)
+  const komitentTimerRef = useRef(null)
 
   const invoice = invoices.find((i) => i.id === id)
   if (!invoice) return <Navigate to="/invoices" replace />
   const d = buildDetail(invoice)
 
   const posted = invoice.status === 'Approved' || invoice.status === 'Exported'
+
+  // Auto-fill the sibling field when sifra or komitent name is changed.
+  const handleSifraChange = (v) => {
+    updateField(invoice.id, 'komitentSifra', v)
+    clearTimeout(sifraTimerRef.current)
+    if (!v.trim()) return
+    sifraTimerRef.current = setTimeout(async () => {
+      const match = await lookupKomitent({ sifra: v.trim() }).catch(() => null)
+      if (match) updateField(invoice.id, 'komitent', match.name)
+    }, 400)
+  }
+
+  const handleKomitentChange = (v) => {
+    updateField(invoice.id, 'komitent', v)
+    clearTimeout(komitentTimerRef.current)
+    if (!v.trim() || v.trim().length < 3) return
+    komitentTimerRef.current = setTimeout(async () => {
+      const match = await lookupKomitent({ name: v.trim() }).catch(() => null)
+      if (match) updateField(invoice.id, 'komitentSifra', match.id)
+    }, 600)
+  }
 
   // Batch mode: navigate through extracted invoices using the batch cursor.
   // Non-batch mode: navigate through all pending invoices (legacy queue).
@@ -105,6 +128,10 @@ export default function InvoiceDetail() {
     setSavingTemplate(true)
     try {
       const keywords = templateKeywords.split(',').map((k) => k.trim()).filter(Boolean)
+      const defaults = {}
+      if (invoice.vendor?.trim())        defaults.vendor_name      = invoice.vendor.trim()
+      if (invoice.komitent?.trim())      defaults.komitent_name    = invoice.komitent.trim()
+      if (invoice.komitentSifra?.trim()) defaults.komitent_sifra   = invoice.komitentSifra.trim()
       await saveTemplateFromInvoice({
         display_name: templateName.trim(),
         keywords,
@@ -114,6 +141,7 @@ export default function InvoiceDetail() {
           invoice_date: invoice.invoiceDate,
           total: invoice.total,
         },
+        defaults,
       })
       setTemplateSaved(true)
       pushToast('ok', 'Шаблонот е зачуван', `"${templateName.trim()}" ќе се користи за идни фактури`)
@@ -144,8 +172,8 @@ export default function InvoiceDetail() {
 
   const fields = [
     stdField({ label: 'Добавувач', value: invoice.vendor || '', editable: true, onChange: (v) => updateField(invoice.id, 'vendor', v), ...pinProps('vendor_name', () => invoice.vendor) }),
-    stdField({ label: 'Комитент', value: invoice.komitent || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitent', v), flagged: invoice.komitentLowConfidence, ...pinProps('komitent_name', () => invoice.komitent) }),
-    stdField({ label: 'Шифра на комитент', value: invoice.komitentSifra || '', editable: true, onChange: (v) => updateField(invoice.id, 'komitentSifra', v), ...pinProps('komitent_sifra', () => invoice.komitentSifra) }),
+    stdField({ label: 'Комитент', value: invoice.komitent || '', editable: true, onChange: handleKomitentChange, flagged: invoice.komitentLowConfidence, ...pinProps('komitent_name', () => invoice.komitent) }),
+    stdField({ label: 'Шифра на комитент', value: invoice.komitentSifra || '', editable: true, onChange: handleSifraChange, ...pinProps('komitent_sifra', () => invoice.komitentSifra) }),
     stdField({ label: 'Број на фактура', value: invoice.number || '', editable: true, onChange: (v) => updateField(invoice.id, 'number', v) }),
     stdField({
       label: 'Датум на фактура',
