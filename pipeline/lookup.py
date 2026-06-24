@@ -168,6 +168,19 @@ class KomitentLookup:
                 return {"id": entry_id, "name": entry_name}
         return None
 
+    def search(self, query: str, max_results: int = 8) -> List[Dict]:
+        """Return komitents whose name contains query (case-insensitive substring match)."""
+        if not query:
+            return []
+        q = query.lower()
+        results = []
+        for i, (komitent_id, _) in enumerate(self._entries):
+            if q in self._names[i].lower() or q in self._norm_names[i]:
+                results.append({"id": komitent_id, "name": self._names[i]})
+                if len(results) >= max_results:
+                    break
+        return results
+
     def match(self, vendor_name: str, threshold: int = 60) -> Optional[Dict]:
         """
         Fuzzy-match vendor_name against the komitent list.
@@ -350,6 +363,19 @@ class KontenPlanLookup:
     def describe(self, konto: str) -> Optional[str]:
         """Return the description for a konto code."""
         return self.accounts.get(konto)
+
+    def search(self, query: str, max_results: int = 8) -> List[Dict]:
+        """Return konto entries where code or description contains query (case-insensitive)."""
+        if not query:
+            return []
+        q = query.lower()
+        results = []
+        for code, description in self.accounts.items():
+            if q in code.lower() or q in description.lower():
+                results.append({"code": code, "description": description})
+                if len(results) >= max_results:
+                    break
+        return results
 
 
 # ---------------------------------------------------------------------------

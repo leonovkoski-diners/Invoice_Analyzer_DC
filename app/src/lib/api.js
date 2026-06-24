@@ -121,6 +121,24 @@ export async function lookupKomitent({ sifra, name } = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Searchable lookup (konto plan + komitent list)
+// ---------------------------------------------------------------------------
+
+export async function searchKonto(q) {
+  const res = await fetch(`${API_BASE}/api/lookup/konto?q=${encodeURIComponent(q)}`)
+  if (!res.ok) return []
+  const data = await res.json()
+  return data.results || []
+}
+
+export async function searchKomitent(q) {
+  const res = await fetch(`${API_BASE}/api/lookup/komitent?q=${encodeURIComponent(q)}`)
+  if (!res.ok) return []
+  const data = await res.json()
+  return data.results || []
+}
+
+// ---------------------------------------------------------------------------
 // Konto learning
 // ---------------------------------------------------------------------------
 

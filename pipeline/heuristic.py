@@ -802,18 +802,111 @@ def extract_financial_totals(full_text: str, lines: List[str] = None) -> Dict[st
 
 
 # ---------------------------------------------------------------------------
-# Single synthetic line item — built from verified totals, not OCR table rows
+# Line item extraction — tries individual OCR rows, falls back to synthetic
 # ---------------------------------------------------------------------------
 
-def extract_line_items(total: Optional[Decimal]) -> List[Dict]:
-    """
-    Return a single synthetic line item carrying the invoice gross total.
+# Lines that are totals / headers — skip when parsing for individual items
+_SKIP_ITEM_LINE_RE = re.compile(
+    r'\b(вкупно|ukupno|total|за наплата|za naplata|основа|osnova|ддв|ddv|vat|'
+    r'данок|danok|попуст|popust|рабат|rabat|износ без|neto iznos|бруто|bruto|'
+    r'подвкупно|podvkupno|опис|opis|количина|qty|единица|unit|датум|datum|'
+    r'фактура|број|number|date|клиент|client|добавувач|купувач|'
+    r'plateno|платено|сметка|smetka|жиро|edb|едб|даночен|матичен|pib)\b',
+    re.IGNORECASE,
+)
+# Monetary amount at the end of a line: European comma-decimal format
+# Matches e.g. "1.234,56"  "1 234,56"  "1234,56"  "234,56"
+_ITEM_AMT_RE = re.compile(r'(\d{1,3}(?:[. ]\d{3})*,\d{2}|\d+,\d{2})\s*$')
 
-    We never parse OCR table rows — phone numbers, years, column headers, and
-    reference codes all look like amounts to a regex. Instead we build one line
-    item from the authoritative gross total label (За наплата, ВКУПНО СЕ, etc.)
-    which is far more reliable. line_total is GROSS (цена со ДДВ).
+
+def _try_parse_line_items(
+    lines: List[str],
+    total: Decimal,
+    vat_rate: Optional[Decimal],
+) -> Optional[List[Dict]]:
     """
+    Try to extract individual line items from OCR lines.
+    Returns a list of item dicts when reliable, None when parsing is uncertain.
+    """
+    candidates = []
+    for raw in lines:
+        line = raw.strip()
+        if not line or len(line) < 6:
+            continue
+        if _SKIP_ITEM_LINE_RE.search(line):
+            continue
+        m = _ITEM_AMT_RE.search(line)
+        if not m:
+            continue
+        amt_raw = m.group(1).replace(' ', '').replace('.', '').replace(',', '.')
+        try:
+            amount = Decimal(amt_raw)
+        except Exception:
+            continue
+        if amount < Decimal('1') or amount > total * Decimal('1.05'):
+            continue
+        # Build description: everything before the amount, strip trailing digit tokens
+        desc = line[:m.start()].strip()
+        parts = desc.split()
+        while parts and re.match(r'^[\d.,]+$', parts[-1]):
+            parts.pop()
+        desc = ' '.join(parts).strip(' ,.|:;')
+        if len(desc) < 3:
+            continue
+        if not re.search(r'[A-Za-zЀ-ӿ]', desc):  # must contain letters
+            continue
+        candidates.append({'description': desc, 'amount': amount})
+
+    if len(candidates) < 2:
+        return None
+
+    raw_sum = sum(c['amount'] for c in candidates)
+    ratio = float(raw_sum / total)
+
+    # Determine whether extracted amounts are gross (ratio≈1) or net (ratio≈1/1+vat)
+    if 0.85 <= ratio <= 1.15:
+        scale = Decimal('1')
+    elif vat_rate and vat_rate > Decimal('0'):
+        expected_net = float(Decimal('1') / (Decimal('1') + vat_rate / Decimal('100')))
+        if abs(ratio - expected_net) <= 0.12:
+            scale = Decimal('1') + vat_rate / Decimal('100')
+        else:
+            return None
+    else:
+        return None
+
+    result = []
+    for c in candidates:
+        gross = (c['amount'] * scale).quantize(Decimal('0.01'))
+        result.append({
+            'description': c['description'],
+            'quantity': Decimal('1'),
+            'unit_price': gross,
+            'line_total': gross,
+            'vat_rate': None,
+        })
+
+    # Final check: gross sum must be within 15% of invoice total
+    gross_sum = sum(r['line_total'] for r in result)
+    if abs(float(gross_sum / total) - 1.0) > 0.15:
+        return None
+
+    return result
+
+
+def extract_line_items(
+    total: Optional[Decimal],
+    ocr_lines: Optional[List[str]] = None,
+    vat_rate: Optional[Decimal] = None,
+) -> List[Dict]:
+    """
+    Extract line items. Tries to parse individual rows from OCR lines when
+    available; falls back to a single synthetic item from the verified total.
+    """
+    if ocr_lines and total and total > Decimal('0'):
+        parsed = _try_parse_line_items(ocr_lines, total, vat_rate)
+        if parsed:
+            return parsed
     gross = total or Decimal("0")
     return [{
         "description": "Услуги / Services",
@@ -867,13 +960,15 @@ def extract_from_text(ocr_result: dict) -> Dict[str, Any]:
         logger.warning("invoice_date extraction failed: %s", exc)
 
     total = Decimal("0")
+    vat_rate: Optional[Decimal] = None
     try:
         financials = extract_financial_totals(full_text, lines)
         total = financials.get("total") or Decimal("0")
+        vat_rate = financials.get("tax_rate")
     except Exception as exc:
         logger.warning("financial totals extraction failed: %s", exc)
 
-    line_items = extract_line_items(total if total > 0 else None)
+    line_items = extract_line_items(total if total > 0 else None, ocr_lines=lines, vat_rate=vat_rate)
 
     # Komitent lookup
     # Pass 1: fuzzy-match the extracted vendor name against the registry (fast path).

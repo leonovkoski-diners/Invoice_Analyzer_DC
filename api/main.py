@@ -271,6 +271,30 @@ def komitent_lookup_route(sifra: Optional[str] = None, name: Optional[str] = Non
 
 
 # ---------------------------------------------------------------------------
+# Routes — searchable lookup (konto plan + komitent list)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/lookup/konto")
+def konto_search_route(q: str = "") -> dict[str, Any]:
+    """Search konto plan by code or description substring. Returns up to 8 matches."""
+    if not q or len(q.strip()) < 2:
+        return {"results": []}
+    from pipeline.lookup import get_konten_plan_lookup
+    lookup = get_konten_plan_lookup()
+    return {"results": lookup.search(q.strip(), max_results=8)}
+
+
+@app.get("/api/lookup/komitent")
+def komitent_search_route(q: str = "") -> dict[str, Any]:
+    """Search komitent list by name substring. Returns up to 8 matches."""
+    if not q or len(q.strip()) < 2:
+        return {"results": []}
+    from pipeline.lookup import get_komitent_lookup
+    lookup = get_komitent_lookup()
+    return {"results": lookup.search(q.strip(), max_results=8)}
+
+
+# ---------------------------------------------------------------------------
 # Routes — vendor templates CRUD
 # ---------------------------------------------------------------------------
 

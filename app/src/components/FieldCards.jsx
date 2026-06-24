@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 function PinButton({ onPin }) {
   const [hovered, setHovered] = useState(false)
@@ -21,6 +21,121 @@ function PinButton({ onPin }) {
         <path d="M8 9v6" strokeLinecap="round" />
       </svg>
     </button>
+  )
+}
+
+function SearchableInput({ value, searchFn, onSelect, onChange, flagged }) {
+  const [query, setQuery] = useState(value == null ? '' : String(value))
+  const [results, setResults] = useState([])
+  const [activeIdx, setActiveIdx] = useState(-1)
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const timerRef = useRef(null)
+  const containerRef = useRef(null)
+
+  useEffect(() => { setQuery(value == null ? '' : String(value)) }, [value])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setResults([])
+        setQuery(value == null ? '' : String(value))
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [value])
+
+  const handleChange = (e) => {
+    const q = e.target.value
+    setQuery(q)
+    onChange && onChange(q)
+    setActiveIdx(-1)
+    clearTimeout(timerRef.current)
+    if (q.trim().length < 2) { setResults([]); setOpen(false); return }
+    setLoading(true)
+    timerRef.current = setTimeout(async () => {
+      const res = await searchFn(q.trim()).catch(() => [])
+      setLoading(false)
+      setResults(res)
+      setOpen(true)
+    }, 300)
+  }
+
+  const handleSelect = (item) => {
+    onSelect && onSelect(item)
+    setQuery(item.name || item.description || item.code || '')
+    setResults([])
+    setOpen(false)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') { setOpen(false); setResults([]); setQuery(value == null ? '' : String(value)); return }
+    if (!open || results.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, results.length - 1)) }
+    if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)) }
+    if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); handleSelect(results[activeIdx]) }
+  }
+
+  const handleBlur = (e) => {
+    e.currentTarget.style.borderBottomColor = '#C8C8E0'
+    if (open) {
+      setOpen(false)
+      setResults([])
+      setQuery(value == null ? '' : String(value))
+    }
+  }
+
+  const getLabel = (item) => item.name || item.description || ''
+  const getSubLabel = (item) => item.id || item.code || ''
+  const isSelected = (item) => (item.name || item.code) === value
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <input
+        value={query}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={(e) => (e.currentTarget.style.borderBottomColor = '#1A1A6E')}
+        onBlur={handleBlur}
+        style={{
+          display: 'block', width: '100%', marginTop: 6,
+          fontSize: 13.5, fontWeight: 600,
+          color: flagged ? '#7A4100' : '#16161F',
+          fontFamily: 'inherit', background: 'none', border: 'none',
+          borderBottom: '1px dashed #C8C8E0', outline: 'none',
+          padding: '1px 0 2px', lineHeight: 1.4, boxSizing: 'border-box',
+        }}
+      />
+      {open && (
+        <div style={{
+          position: 'absolute', zIndex: 300, top: '100%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #C8C8E0', borderRadius: 8,
+          boxShadow: '0 4px 18px rgba(26,26,110,0.12)', overflow: 'hidden', marginTop: 2,
+          minWidth: 220,
+        }}>
+          {loading && <div style={{ padding: '8px 12px', fontSize: 12, color: '#9A9AAC', fontStyle: 'italic' }}>Се вчитува…</div>}
+          {!loading && results.length === 0 && <div style={{ padding: '8px 12px', fontSize: 12, color: '#9A9AAC' }}>Нема резултати</div>}
+          {!loading && results.map((item, idx) => (
+            <div
+              key={getSubLabel(item) + idx}
+              onMouseDown={() => handleSelect(item)}
+              onMouseEnter={() => setActiveIdx(idx)}
+              style={{
+                padding: '7px 12px', cursor: 'pointer',
+                background: idx === activeIdx ? '#EEEEF8' : isSelected(item) ? '#F5F5FC' : 'transparent',
+                borderBottom: idx < results.length - 1 ? '1px solid #F0F0EC' : 'none',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 12.5, color: '#16161F' }}>{getLabel(item)}</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: '#9A9AAC', flexShrink: 0 }}>{getSubLabel(item)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -140,30 +255,40 @@ export default function FieldCards({ fields, onAddField }) {
             )}
           </div>
           {f.editable ? (
-            <input
-              type={f.inputType || 'text'}
-              value={f.value == null ? '' : String(f.value)}
-              onChange={(e) => f.onChange && f.onChange(e.target.value)}
-              placeholder={f.labelEditable ? 'Вредност…' : undefined}
-              style={{
-                display: 'block',
-                width: '100%',
-                marginTop: 6,
-                fontSize: 13.5,
-                fontWeight: 600,
-                color: f.flagged ? '#7A4100' : '#16161F',
-                fontFamily: 'inherit',
-                background: 'none',
-                border: 'none',
-                borderBottom: '1px dashed #C8C8E0',
-                outline: 'none',
-                padding: '1px 0 2px',
-                lineHeight: 1.4,
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderBottomColor = '#1A1A6E')}
-              onBlur={(e) => (e.currentTarget.style.borderBottomColor = '#C8C8E0')}
-            />
+            f.searchFn ? (
+              <SearchableInput
+                value={f.value == null ? '' : String(f.value)}
+                searchFn={f.searchFn}
+                onSelect={f.onSearchSelect}
+                onChange={f.onChange}
+                flagged={f.flagged}
+              />
+            ) : (
+              <input
+                type={f.inputType || 'text'}
+                value={f.value == null ? '' : String(f.value)}
+                onChange={(e) => f.onChange && f.onChange(e.target.value)}
+                placeholder={f.labelEditable ? 'Вредност…' : undefined}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  marginTop: 6,
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  color: f.flagged ? '#7A4100' : '#16161F',
+                  fontFamily: 'inherit',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: '1px dashed #C8C8E0',
+                  outline: 'none',
+                  padding: '1px 0 2px',
+                  lineHeight: 1.4,
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderBottomColor = '#1A1A6E')}
+                onBlur={(e) => (e.currentTarget.style.borderBottomColor = '#C8C8E0')}
+              />
+            )
           ) : (
             <div style={{ fontSize: 13.5, fontWeight: 600, color: f.flagged ? '#7A4100' : '#16161F', marginTop: 6, lineHeight: 1.4, wordBreak: 'break-word' }}>
               {f.value == null || f.value === '' ? '—' : String(f.value)}

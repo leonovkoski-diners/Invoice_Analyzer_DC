@@ -3,7 +3,7 @@ import { useState, useRef } from 'react'
 import { useApp } from '../state/appContext'
 import { buildDetail } from '../lib/invoice'
 import { fmtDate, fmtMoney } from '../lib/format'
-import { saveTemplateFromInvoice, lookupKomitent } from '../lib/api'
+import { saveTemplateFromInvoice, lookupKomitent, searchKomitent } from '../lib/api'
 import StatusBadge from '../components/StatusBadge'
 import DocumentPreview from '../components/DocumentPreview'
 import JournalEditor from '../components/JournalEditor'
@@ -172,7 +172,7 @@ export default function InvoiceDetail() {
 
   const fields = [
     stdField({ label: 'Добавувач', value: invoice.vendor || '', editable: true, onChange: (v) => updateField(invoice.id, 'vendor', v), ...pinProps('vendor_name', () => invoice.vendor) }),
-    stdField({ label: 'Комитент', value: invoice.komitent || '', editable: true, onChange: handleKomitentChange, flagged: invoice.komitentLowConfidence, ...pinProps('komitent_name', () => invoice.komitent) }),
+    stdField({ label: 'Комитент', value: invoice.komitent || '', editable: true, onChange: handleKomitentChange, searchFn: searchKomitent, onSearchSelect: (item) => { updateField(invoice.id, 'komitent', item.name); updateField(invoice.id, 'komitentSifra', item.id) }, flagged: invoice.komitentLowConfidence, ...pinProps('komitent_name', () => invoice.komitent) }),
     stdField({ label: 'Шифра на комитент', value: invoice.komitentSifra || '', editable: true, onChange: handleSifraChange, ...pinProps('komitent_sifra', () => invoice.komitentSifra) }),
     stdField({ label: 'Број на фактура', value: invoice.number || '', editable: true, onChange: (v) => updateField(invoice.id, 'number', v) }),
     stdField({
