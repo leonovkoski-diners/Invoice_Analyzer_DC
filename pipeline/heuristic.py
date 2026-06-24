@@ -814,9 +814,35 @@ _SKIP_ITEM_LINE_RE = re.compile(
     r'plateno|платено|сметка|smetka|жиро|edb|едб|даночен|матичен|pib)\b',
     re.IGNORECASE,
 )
-# Monetary amount at the end of a line: European comma-decimal format
-# Matches e.g. "1.234,56"  "1 234,56"  "1234,56"  "234,56"
-_ITEM_AMT_RE = re.compile(r'(\d{1,3}(?:[. ]\d{3})*,\d{2}|\d+,\d{2})\s*$')
+# Monetary amount at the end of a line.
+# European (comma=decimal): 1.234,56  1 234,56  1234,56
+# American (dot=decimal, comma=thousands): 1,234.56  2,659.0  15,340.00
+_ITEM_AMT_RE = re.compile(
+    r'('
+    r'\d{1,3}(?:[. ]\d{3})+,\d{1,3}'   # European with thousands: 1.234,56
+    r'|\d+,\d{1,2}'                      # European plain: 1234,56
+    r'|\d{1,3}(?:,\d{3})+\.\d{1,3}'     # American with thousands: 1,234.56  2,659.0
+    r')\s*$'
+)
+
+
+def _parse_item_amt(raw: str) -> Optional[Decimal]:
+    """Parse a line item amount in either European or American decimal format."""
+    raw = raw.strip().replace('\xa0', '').replace(' ', '')
+    last_comma = raw.rfind(',')
+    last_dot = raw.rfind('.')
+    if last_comma > last_dot:
+        # European: comma is the decimal separator
+        clean = raw.replace('.', '').replace(',', '.')
+    elif last_dot > last_comma:
+        # American: dot is the decimal separator, commas are thousands
+        clean = raw.replace(',', '')
+    else:
+        clean = raw
+    try:
+        return Decimal(clean)
+    except Exception:
+        return None
 
 
 def _try_parse_line_items(
@@ -838,10 +864,8 @@ def _try_parse_line_items(
         m = _ITEM_AMT_RE.search(line)
         if not m:
             continue
-        amt_raw = m.group(1).replace(' ', '').replace('.', '').replace(',', '.')
-        try:
-            amount = Decimal(amt_raw)
-        except Exception:
+        amount = _parse_item_amt(m.group(1))
+        if amount is None:
             continue
         if amount < Decimal('1') or amount > total * Decimal('1.05'):
             continue
