@@ -33,50 +33,20 @@ logger = logging.getLogger(__name__)
 
 TEMPLATES_FILE = Path(__file__).resolve().parents[1] / "templates" / "vendors.json"
 
+# ---------------------------------------------------------------------------
+# YOUR COMPANY'S VAT / EDB NUMBER
+# Set this to your own company's EDB so it is never picked up as a vendor VAT.
+# Digits only (МК/MK prefix is stripped automatically).
+# ---------------------------------------------------------------------------
+_OWN_COMPANY_VAT: str = "4030992100592"
+
 
 # ---------------------------------------------------------------------------
 # Built-in default templates
 # ---------------------------------------------------------------------------
 
 def _default_templates() -> List[Dict]:
-    return [
-        {
-            "id": "evn_mk",
-            "display_name": "ЕВН Македонија",
-            "keywords": ["евн македонија", "evn macedonia", "EVN", "ЕВН"],
-            "currency": "MKD",
-            "patterns": {
-                "vendor_name": r"(?:ЕВН\s*(?:Македонија|Macedonia)?|EVN\s*(?:Macedonia)?)",
-                "vendor_vat_id": r"(?:МК|MK)\s*(\d{13})",
-                "invoice_number": r"(?:Фактура|Invoice|фактура)\s*(?:бр|No|бројот)\.?\s*[:\-]?\s*([A-Za-z0-9/\-]{3,25})",
-                "invoice_date": r"(?:Датум|датум)\s*[:\-]?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
-                "due_date": r"(?:Рок|Валута|плаќање)\s*[:\-]?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
-                "subtotal": r"(?:Основица|без ДДВ|Вредност без ДДВ)\s*[:\-]?\s*([\d.,]+)",
-                "tax_rate": r"ДДВ\s*(\d{1,2})\s*%",
-                "tax_amount": r"ДДВ\s*\d{1,2}\s*%\s*[:\-]?\s*([\d.,]+)",
-                "total": r"(?:Вкупно за плаќање|За наплата|Вкупно)\s*[:\-]?\s*([\d.,]+)",
-                "payment_reference": None
-            }
-        },
-        {
-            "id": "makedonski_telekom",
-            "display_name": "Македонски Телеком",
-            "keywords": ["македонски телеком", "makedonski telekom", "Telekom MK", "MT.NET", "Т-Хоме"],
-            "currency": "MKD",
-            "patterns": {
-                "vendor_name": r"Македонски\s*Телекомуникации|Македонски\s*Телеком",
-                "vendor_vat_id": r"(?:МК|MK)\s*(\d{13})",
-                "invoice_number": r"(?:Сметка|Фактура|Invoice)\s*[Нн]?о?\.?\s*[:\-]?\s*([A-Za-z0-9/\-]{3,25})",
-                "invoice_date": r"(?:Датум на издавање|Датум на фактура|Датум)\s*[:\-]?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
-                "due_date": r"(?:Рок|Валута|плаќање)\s*[:\-]?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
-                "subtotal": r"(?:Износ без ДДВ|Основица|без ДДВ)\s*[:\-]?\s*([\d.,]+)",
-                "tax_rate": r"ДДВ\s*(\d{1,2})\s*%",
-                "tax_amount": r"ДДВ\s*(?:\d{1,2}\s*%\s*)?[:\-]?\s*([\d.,]+)",
-                "total": r"(?:Вкупно|За плаќање|Вкупен износ)\s*[:\-]?\s*([\d.,]+)",
-                "payment_reference": None
-            }
-        },
-    ]
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -133,18 +103,109 @@ def delete_template(template_id: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# VAT / EDB number extraction
+# ---------------------------------------------------------------------------
+
+# Labels that precede the vendor's tax identification number on Macedonian invoices.
+# Listed longest-first so more specific labels are tried before shorter ones.
+_EDB_LABEL_KWS = [
+    'Единствен даночен број',
+    'ДДВ број',
+    'даночен број',
+    'Даночен број',
+    'ЕДБ',
+]
+
+
+def _normalize_vat(vat: str) -> str:
+    """Strip whitespace and optional МК/MK prefix, uppercase — gives digits-only for comparison."""
+    v = vat.replace(' ', '').upper()
+    if v.startswith('МК') or v.startswith('MK'):
+        v = v[2:]
+    return v
+
+
+def extract_vat_number(ocr_text: str) -> Optional[str]:
+    """Extract the vendor's EDB (13-digit tax ID) from OCR text.
+
+    Tries label-anchored extraction first (Cyrillic/Latin lookalike-tolerant),
+    then falls back to any standalone 13-digit run if no label was found.
+    Returns digits-only (МК/MK prefix stripped).
+    """
+    text_norm = unicodedata.normalize('NFC', ocr_text)
+    own_vat = _normalize_vat(_OWN_COMPANY_VAT) if _OWN_COMPANY_VAT.strip() else None
+
+    for kw in _EDB_LABEL_KWS:
+        try:
+            pattern = _keyword_to_regex(kw) + r'\s*[:\-]?\s*((?:[МMМм][КKкк])?\s*\d{10,15})'
+            for m in re.finditer(pattern, text_norm, re.IGNORECASE):
+                normalized = _normalize_vat(m.group(1))
+                if not re.fullmatch(r'\d{10,15}', normalized):
+                    continue
+                if own_vat and normalized == own_vat:
+                    logger.debug("Skipping own-company VAT '%s' found via label '%s'", normalized, kw)
+                    continue
+                logger.info("VAT extracted via label '%s': %s", kw, normalized)
+                return normalized
+        except re.error:
+            pass
+
+    # Fallback: any standalone 13-digit number — iterate all occurrences, skip own VAT
+    for m in re.finditer(r'(?<!\d)(\d{13})(?!\d)', text_norm):
+        normalized = m.group(1)
+        if own_vat and normalized == own_vat:
+            logger.debug("Skipping own-company VAT '%s' found via 13-digit fallback", normalized)
+            continue
+        logger.info("VAT extracted via 13-digit fallback: %s", normalized)
+        return normalized
+
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Template matching
 # ---------------------------------------------------------------------------
 
 def find_matching_template(full_text: str) -> Optional[Dict]:
-    """Return the first template whose keywords appear in the OCR text."""
-    text_lower = full_text.lower()
+    """Return the template whose vat_number matches the EDB extracted from OCR text.
+    Falls back to keyword-based matching if no VAT is found or no template matched by VAT."""
+    text_norm = unicodedata.normalize('NFC', full_text)
+
+    # Primary: VAT-based matching
+    vat = extract_vat_number(full_text)
+    if vat:
+        vat_norm = _normalize_vat(vat)
+        for template in load_templates():
+            tmpl_vat = _normalize_vat(template.get('vat_number') or '')
+            if tmpl_vat and tmpl_vat == vat_norm:
+                logger.info("Template matched by VAT '%s': '%s' (%s)",
+                            vat_norm, template['display_name'], template['id'])
+                return template
+        logger.info("VAT '%s' found but no template matched — trying keyword fallback", vat_norm)
+    else:
+        logger.info("No VAT/EDB number extracted — trying keyword fallback")
+
+    # Fallback: keyword-based matching (all keywords must be present in the OCR text)
     for template in load_templates():
-        keywords = template.get("keywords", [])
-        if any(kw.lower() in text_lower for kw in keywords):
-            logger.info(f"Template matched: '{template['display_name']}' ({template['id']})")
-            return template
-    logger.info("No template matched — using heuristic extractor")
+        kws_raw = template.get('keywords') or []
+        if isinstance(kws_raw, str):
+            kws = [k.strip() for k in kws_raw.split(',') if k.strip()]
+        else:
+            kws = [k.strip() for k in kws_raw if k.strip()]
+        if not kws:
+            continue
+        try:
+            matched = all(
+                re.search(_keyword_to_regex(unicodedata.normalize('NFC', kw)), text_norm, re.IGNORECASE)
+                for kw in kws
+            )
+            if matched:
+                logger.info("Template matched by keywords: '%s' (%s)", template['display_name'], template['id'])
+                return template
+        except re.error:
+            pass
+
+    logger.info("No matching template found — using heuristic extractor")
     return None
 
 

@@ -51,6 +51,16 @@ function localKeywordSearch(kw, ocrText) {
   return null
 }
 
+// Extract EDB/VAT number from OCR text (mirrors backend logic)
+function extractVatFromOcr(text) {
+  const labelRe = /(?:единствен\s+даночен\s+број|ДДВ\s+број|даночен\s+број|ЕДБ)\s*[:\-]?\s*(?:[МMмm][КKкk])?\s*(\d{10,15})/gi
+  const m = labelRe.exec(text)
+  if (m) return m[1]
+  // Fallback: standalone 13-digit number
+  const m2 = /(?<!\d)(\d{13})(?!\d)/.exec(text)
+  return m2 ? m2[1] : ''
+}
+
 // Show first N chars of a string as "U+XXXX" codepoints
 function codepoints(str, n = 5) {
   return Array.from(str.trim().slice(0, n))
@@ -260,7 +270,10 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
     display_name: initial?.display_name || '',
     currency:     initial?.currency || 'MKD',
   })
-  const [keywordsRaw, setKeywordsRaw] = useState((initial?.keywords || []).join(', '))
+  const [vatNumber, setVatNumber] = useState(initial?.vat_number || '')
+  const [keywords,  setKeywords]  = useState(
+    Array.isArray(initial?.keywords) ? initial.keywords.join(', ') : (initial?.keywords || '')
+  )
 
   // Collected from FieldKeywordRow children
   const [fieldPatterns,     setFieldPatterns]     = useState(
@@ -289,7 +302,13 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
     setOcrError(null)
     try {
       const data = await getOcrText(file)
-      setOcrText(data.full_text || '')
+      const text = data.full_text || ''
+      setOcrText(text)
+      // Auto-detect VAT number unless the user already typed one
+      if (!vatNumber.trim()) {
+        const detected = extractVatFromOcr(text)
+        if (detected) setVatNumber(detected)
+      }
     } catch (e) {
       setOcrError(e.message)
     } finally {
@@ -299,14 +318,14 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    const keywords = keywordsRaw.split(',').map((k) => k.trim()).filter(Boolean)
     const patterns = {}
     const keyword_hints = {}
     for (const f of PATTERN_FIELDS) {
       patterns[f.key]      = fieldPatterns[f.key]      || null
       if (fieldKeywordHints[f.key]) keyword_hints[f.key] = fieldKeywordHints[f.key]
     }
-    onSave({ ...meta, keywords, currency: meta.currency || 'MKD', patterns, keyword_hints })
+    const keywordsArr = keywords.split(',').map(k => k.trim()).filter(Boolean)
+    onSave({ ...meta, vat_number: vatNumber.trim(), keywords: keywordsArr, currency: meta.currency || 'MKD', patterns, keyword_hints })
   }
 
   const inputStyle = {
@@ -343,14 +362,42 @@ function TemplateForm({ initial, onSave, onCancel, saving }) {
 
       <div>
         <label style={labelStyle}>
-          Клучни зборови за идентификација — барем еден мора да се pojavi во OCR текстот за активирање (одделени со запирка)
+          ЕДБ / Даночен број — единствен идентификатор на добавувачот (автоматски се детектира при прикачување фактура)
+        </label>
+        <input
+          style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em' }}
+          value={vatNumber}
+          onChange={(e) => setVatNumber(e.target.value.replace(/\D/g, ''))}
+          placeholder="4030992100592"
+          maxLength={15}
+        />
+        {vatNumber && (
+          <div style={{ fontSize: 10.5, color: '#0D5C44', marginTop: 3 }}>
+            ✓ Шаблонот ќе се активира кога ЕДБ {vatNumber} ќе биде пронајден во фактурата
+          </div>
+        )}
+        {!vatNumber && (
+          <div style={{ fontSize: 10.5, color: '#9A9AAC', marginTop: 3 }}>
+            Прикачи фактура подолу за автоматска детекција
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label style={labelStyle}>
+          Резервни клучни зборови — се користат само ако ЕДБ не може да се прочита (разделени со запирка)
         </label>
         <input
           style={inputStyle}
-          value={keywordsRaw}
-          onChange={(e) => setKeywordsRaw(e.target.value)}
-          placeholder="евн македонија, EVN, ЕВН"
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          placeholder="НИКОБ Обезбедување, УНИ БАНКА"
         />
+        {keywords.trim() && (
+          <div style={{ fontSize: 10.5, color: '#7A4100', marginTop: 3 }}>
+            ⚠ Резервно совпаѓање: сите клучни зборови мора да бидат присутни во фактурата
+          </div>
+        )}
       </div>
 
       {/* Patterns section */}
@@ -498,13 +545,17 @@ function TemplateCard({ template, onEdit, onDelete }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14, color: '#16161F' }}>{template.display_name}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-            {(template.keywords || []).slice(0, 4).map((kw) => (
-              <span key={kw} style={{ ...mono, fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#EEEEF8', color: '#1A1A6E' }}>
-                {kw}
+            {template.vat_number ? (
+              <span style={{ ...mono, fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#EEEEF8', color: '#1A1A6E' }}>
+                ЕДБ {template.vat_number}
               </span>
-            ))}
-            {(template.keywords || []).length > 4 && (
-              <span style={{ fontSize: 11, color: '#9A9AAC' }}>+{template.keywords.length - 4} повеќе</span>
+            ) : (
+              <span style={{ fontSize: 10.5, color: '#C4C4D0', fontStyle: 'italic' }}>Нема ЕДБ број</span>
+            )}
+            {(template.keywords?.length > 0) && (
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#FFF5E8', color: '#7A4100' }}>
+                {template.keywords.length} клучн{template.keywords.length === 1 ? 'а зборов' : 'и зборови'} (резервно)
+              </span>
             )}
           </div>
         </div>
@@ -634,7 +685,7 @@ export default function Templates() {
             Шаблони за добавувачи
           </h1>
           <p style={{ fontSize: 13, color: '#8A8A9C', margin: '6px 0 0' }}>
-            Внеси клучни зборови — апликацијата автоматски гради regex шаблони од OCR текстот на фактурата.
+            Даночниот број (ЕДБ) го идентификува добавувачот — прикачи фактура за автоматска детекција.
           </p>
         </div>
         {editing === null && (

@@ -413,19 +413,21 @@ def save_template_from_invoice(body: dict = Body(...)) -> dict[str, Any]:
     """
     Auto-generate a vendor template from a successfully reviewed invoice.
     The frontend sends the OCR text + current field values; this endpoint
-    finds anchor context around each value and stores vendor-specific patterns.
+    extracts the vendor's EDB/VAT number from the OCR text and stores it as
+    the template identifier, together with vendor-specific field patterns.
     """
-    from pipeline.templates import generate_template_patterns
+    from pipeline.templates import generate_template_patterns, extract_vat_number
 
     display_name = (body.get("display_name") or "").strip()
     if not display_name:
         raise HTTPException(status_code=422, detail="display_name is required")
 
-    keywords = body.get("keywords") or [display_name]
     ocr_text = body.get("ocr_text") or ""
     extracted = body.get("extracted") or {}
     raw_defaults = body.get("defaults") or {}
+    keywords = [k.strip() for k in (body.get("keywords") or []) if str(k).strip()]
 
+    vat_number = extract_vat_number(ocr_text)
     patterns = generate_template_patterns(ocr_text, extracted)
 
     _ALLOWED = {"vendor_name", "komitent_name", "komitent_sifra"}
@@ -437,7 +439,8 @@ def save_template_from_invoice(body: dict = Body(...)) -> dict[str, Any]:
 
     template: dict[str, Any] = {
         "display_name": display_name,
-        "keywords": [k for k in keywords if k and len(k.strip()) > 1],
+        "vat_number": vat_number or "",
+        "keywords": keywords,
         "currency": "MKD",
         "source": "user_saved",
         "patterns": patterns,
@@ -447,7 +450,7 @@ def save_template_from_invoice(body: dict = Body(...)) -> dict[str, Any]:
 
     saved = upsert_template(template)
     logger.info(
-        "User saved template '%s' with %d patterns and defaults: %r",
-        display_name, len(patterns), clean_defaults,
+        "User saved template '%s' (VAT: %s) with %d patterns and defaults: %r",
+        display_name, vat_number, len(patterns), clean_defaults,
     )
     return {"template": saved}
