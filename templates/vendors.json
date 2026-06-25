@@ -53,24 +53,25 @@
     "id": "84a95ba6"
   },
   {
+    "id": "60d747a7",
     "display_name": "Mellon",
+    "currency": "MKD",
     "vat_number": "",
     "keywords": [
-      "MELON"
+      "MELLON"
     ],
-    "currency": "MKD",
-    "source": "user_saved",
     "patterns": {
+      "vendor_name": null,
       "invoice_number": "ФАКТУРА\\ БРОЈ:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
-      "total": "Преостанато\\ за\\ плайање:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
-      "invoice_date": "ДАТУМ:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+      "invoice_date": "ДАТУМ:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "total": "Преостанато\\ за\\ плайање:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
     },
+    "keyword_hints": {},
     "defaults": {
       "vendor_name": "Mellon",
       "komitent_name": "Melon Solu{n",
       "komitent_sifra": "1763"
-    },
-    "id": "60d747a7"
+    }
   },
   {
     "display_name": "Алма-М дооел",

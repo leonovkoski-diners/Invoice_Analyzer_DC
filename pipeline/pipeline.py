@@ -21,7 +21,7 @@ from typing import Callable, List, Optional
 
 from pipeline.ocr import extract_text_from_file
 from pipeline.templates import find_matching_template, apply_template
-from pipeline.heuristic import extract_from_text
+from pipeline.heuristic import extract_from_text, structure_ocr_text
 from pipeline.post_processor import post_process
 from pipeline.schema import InvoiceRecord
 
@@ -99,12 +99,14 @@ class InvoicePipeline:
             self._emit("Running OCR extraction...", 15)
             ocr_result = extract_text_from_file(file_path)
             result.page_count = ocr_result["page_count"]
-            result.ocr_text = ocr_result["full_text"]
 
             full_text = ocr_result["full_text"]
             lines = []
             for page in ocr_result["pages"]:
                 lines.extend(page["lines"])
+
+            structured_lines = structure_ocr_text(lines)
+            result.ocr_text = "\n".join(structured_lines)
 
             # ── Stage 2: Template matching ────────────────────────────────
             self._emit("Matching vendor template...", 40)
@@ -116,7 +118,7 @@ class InvoicePipeline:
                 result.template_used = template["id"]
                 extracted = apply_template(template, full_text, lines)
             else:
-                extracted = extract_from_text(ocr_result)
+                extracted = extract_from_text(ocr_result, file_path=str(file_path))
 
             # ── Stage 4: Schema validation ────────────────────────────────
             self._emit("Validating schema...", 75)

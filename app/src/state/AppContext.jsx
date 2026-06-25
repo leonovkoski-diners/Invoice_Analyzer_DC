@@ -79,6 +79,11 @@ export function AppProvider({ children }) {
   // Upload modal open state
   const [uploadOpen, setUploadOpen] = useState(false)
 
+  // Multi-session tracking — persists across uploads for the life of the tab
+  const [sessions, setSessions] = useState([])
+  const [exportSelection, setExportSelection] = useState(new Set())
+  const sessionCounterRef = useRef(0)
+
   // Batch session state
   // batchQueue items: { batchId, fileName, status: 'waiting'|'analyzing'|'done'|'error', invoiceId, errorMsg }
   const [batchQueue, setBatchQueue] = useState([])
@@ -271,6 +276,12 @@ export function AppProvider({ children }) {
     const arr = Array.from(files)
     if (arr.length === 0) return
 
+    // Register a new numbered session before extraction starts
+    sessionCounterRef.current += 1
+    const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5)
+    const sessionNum = sessionCounterRef.current
+    setSessions((prev) => [...prev, { id: sessionId, number: sessionNum, createdAt: new Date().toISOString(), invoiceIds: [] }])
+
     const items = arr.map((file, i) => ({
       batchId: 'b-' + Date.now() + '-' + i,
       fileName: file.name,
@@ -292,6 +303,7 @@ export function AppProvider({ children }) {
         const resp = await extractDocument(item.file)
         const inv = invoiceFromExtraction(resp, { fileName: item.fileName, fileUrl, fileType: item.file.type })
         setInvoices((list) => [inv, ...list])
+        setSessions((prev) => prev.map((s) => s.id === sessionId ? { ...s, invoiceIds: [...s.invoiceIds, inv.id] } : s))
         setBatchQueue((q) => q.map((i) => (i.batchId === item.batchId ? { ...i, status: 'done', invoiceId: inv.id } : i)))
       } catch (err) {
         URL.revokeObjectURL(fileUrl)
@@ -368,6 +380,43 @@ export function AppProvider({ children }) {
     }
   }, [batchQueue, invoices, pushToast])
 
+  // ── Cross-session export selection ───────────────────────────────────────
+
+  const toggleExportSelect = useCallback((id) => {
+    setExportSelection((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const clearExportSelection = useCallback(() => {
+    setExportSelection(new Set())
+  }, [])
+
+  const exportSelected = useCallback(() => {
+    const selected = invoices
+      .filter((inv) => exportSelection.has(inv.id) && (inv.status === 'Approved' || inv.status === 'Exported'))
+      .sort((a, b) => (a.invoiceDate || '').localeCompare(b.invoiceDate || ''))
+
+    if (selected.length === 0) {
+      pushToast('warn', 'Нема за извоз', 'Избери одобрени фактури за извоз')
+      return
+    }
+
+    try {
+      const filename = exportBatchToHelixK(selected)
+      setInvoices((list) =>
+        list.map((inv) => (selected.some((a) => a.id === inv.id) ? { ...inv, status: 'Exported' } : inv)),
+      )
+      setExportSelection(new Set())
+      pushToast('ok', 'Извезени избрани', `${selected.length} ${selected.length > 1 ? 'фактури' : 'фактура'} → ${filename}`)
+    } catch (err) {
+      pushToast('error', 'Извозот не успеа', err.message || 'Не може да се генерира .xlsx')
+    }
+  }, [invoices, exportSelection, pushToast])
+
   const value = useMemo(
     () => ({
       invoices,
@@ -389,6 +438,12 @@ export function AppProvider({ children }) {
       uploadOpen,
       openUpload,
       closeUpload,
+      // sessions
+      sessions,
+      exportSelection,
+      toggleExportSelect,
+      clearExportSelection,
+      exportSelected,
       // batch session
       batchQueue,
       batchCursor,
@@ -422,6 +477,11 @@ export function AppProvider({ children }) {
       uploadOpen,
       openUpload,
       closeUpload,
+      sessions,
+      exportSelection,
+      toggleExportSelect,
+      clearExportSelection,
+      exportSelected,
       batchQueue,
       batchCursor,
       batchDoneItems,

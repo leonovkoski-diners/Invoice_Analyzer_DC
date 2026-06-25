@@ -84,7 +84,7 @@ def find_poppler_path() -> Optional[str]:
 # PDF → PIL images
 # ---------------------------------------------------------------------------
 
-def pdf_to_pil_images(pdf_path: str | Path, dpi: int = 200) -> list:
+def pdf_to_pil_images(pdf_path: str | Path, dpi: int = 500) -> list:
     """Rasterize a PDF to a list of PIL Images at the given DPI."""
     try:
         from pdf2image import convert_from_path
@@ -124,17 +124,7 @@ def image_to_pil(image_path: str | Path):
 # ---------------------------------------------------------------------------
 
 def _preprocess_for_ocr(pil_image):
-    """
-    Mild preprocessing that improves OCR on dot-matrix / typewriter fonts
-    (autocontrast + very gentle blur that merges closely-spaced dot pixels
-    into strokes) without visibly degrading sharp vector-rendered PDFs.
-    """
-    from PIL import ImageFilter, ImageOps
-    gray = pil_image.convert("L")
-    gray = ImageOps.autocontrast(gray, cutoff=1)
-    # radius 0.5 is barely perceptible on clean text but merges dot-font pixels
-    gray = gray.filter(ImageFilter.GaussianBlur(radius=0.5))
-    return gray.convert("RGB")
+    return pil_image.convert("L").convert("RGB")
 
 
 def ocr_pil_image(pil_image, page_num: int = 1) -> dict:
@@ -227,22 +217,80 @@ def ocr_pil_image(pil_image, page_num: int = 1) -> dict:
 # Full file pipeline
 # ---------------------------------------------------------------------------
 
+def _extract_pdf_text_layer(file_path: Path) -> dict | None:
+    """
+    Try to extract text directly from the PDF embedded text layer via pdfplumber.
+    Returns the same structure as EasyOCR results if extraction yields >= 100 chars,
+    otherwise returns None so the caller falls back to EasyOCR.
+    """
+    try:
+        import pdfplumber
+    except ImportError:
+        logger.warning("pdfplumber not installed — skipping PDF text layer extraction")
+        return None
+
+    try:
+        with pdfplumber.open(str(file_path)) as pdf:
+            pages = []
+            for i, page in enumerate(pdf.pages, start=1):
+                text = page.extract_text() or ""
+                lines = [ln for ln in text.splitlines() if ln.strip()]
+                pages.append({
+                    "page": i,
+                    "text": "\n".join(lines),
+                    "lines": lines,
+                    "raw": [],
+                })
+
+        total_chars = sum(len(p["text"].strip()) for p in pages)
+        if total_chars < 100:
+            logger.info(f"PDF text layer too short ({total_chars} chars) — falling back to EasyOCR")
+            return None
+
+        page_texts = []
+        for p in pages:
+            if len(pages) > 1:
+                page_texts.append(f"--- Page {p['page']} ---\n{p['text']}")
+            else:
+                page_texts.append(p["text"])
+        full_text = "\n\n".join(page_texts)
+
+        logger.info(f"PDF text layer extracted: {len(pages)} page(s), {total_chars} chars")
+        return {
+            "pages": pages,
+            "full_text": full_text,
+            "page_count": len(pages),
+            "extraction_method": "pdf_text_layer",
+        }
+    except Exception as exc:
+        logger.warning(f"pdfplumber extraction failed: {exc} — falling back to EasyOCR")
+        return None
+
+
 def extract_text_from_file(file_path: str | Path) -> dict:
     """
-    OCR pipeline: file → per-page text → merged full text.
+    Extraction pipeline: file → per-page text → merged full text.
+
+    For PDFs, attempts text layer extraction first (pdfplumber); falls back to
+    EasyOCR only if the PDF has no embedded text or it is too short to be useful.
+    Image files always use EasyOCR.
 
     Returns:
         {
             "pages": [{"page": int, "text": str, "lines": list, "raw": list}],
             "full_text": str,
             "page_count": int,
+            "extraction_method": "pdf_text_layer" | "easyocr",
         }
     """
     file_path = Path(file_path)
     suffix = file_path.suffix.lower()
-    dpi = int(os.environ.get("INVOICE_OCR_DPI", "200"))
+    dpi = int(os.environ.get("INVOICE_OCR_DPI", "500"))
 
     if suffix == ".pdf":
+        text_layer = _extract_pdf_text_layer(file_path)
+        if text_layer is not None:
+            return text_layer
         pil_images = pdf_to_pil_images(file_path, dpi=dpi)
     elif suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
         pil_images = [image_to_pil(file_path)]
@@ -251,8 +299,7 @@ def extract_text_from_file(file_path: str | Path) -> dict:
 
     pages = []
     for i, img in enumerate(pil_images, start=1):
-        result = ocr_pil_image(img, page_num=i)
-        pages.append(result)
+        pages.append(ocr_pil_image(img, page_num=i))
 
     page_texts = []
     for p in pages:
@@ -262,10 +309,11 @@ def extract_text_from_file(file_path: str | Path) -> dict:
             page_texts.append(p["text"])
 
     full_text = "\n\n".join(page_texts)
-    logger.info(f"OCR complete: {len(pages)} page(s), {len(full_text)} chars")
+    logger.info(f"EasyOCR complete: {len(pages)} page(s), {len(full_text)} chars")
 
     return {
         "pages": pages,
         "full_text": full_text,
         "page_count": len(pages),
+        "extraction_method": "easyocr",
     }
