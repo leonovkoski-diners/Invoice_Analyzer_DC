@@ -301,18 +301,29 @@ def apply_template(template: Dict, full_text: str, lines: List[str]) -> Dict[str
     except Exception as exc:
         logger.warning("total pattern extraction failed in template: %s", exc)
 
+    subtotal: Optional[Decimal] = None
+    tax_rate: Optional[Decimal] = None
     if not total:
         try:
             from pipeline.heuristic import extract_financial_totals
             financials = extract_financial_totals(full_text, lines)
-            total = financials.get("total")
+            total    = financials.get("total")
+            subtotal = financials.get("subtotal")
+            tax_rate = financials.get("tax_rate")
         except Exception as exc:
             logger.warning("financial totals fallback failed in template: %s", exc)
+    else:
+        try:
+            from pipeline.heuristic import extract_financial_totals
+            financials = extract_financial_totals(full_text, lines)
+            subtotal = financials.get("subtotal")
+            tax_rate = financials.get("tax_rate")
+        except Exception:
+            pass
 
     total = total or Decimal("0")
 
-    # Single gross line item built from total
-    line_items = extract_line_items(total if total > 0 else None)
+    line_items = extract_line_items(lines, total if total > 0 else None, subtotal, tax_rate)
 
     # Komitent lookup
     final_vendor_name = vendor_name or template["display_name"]

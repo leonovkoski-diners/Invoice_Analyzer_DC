@@ -1,20 +1,19 @@
 [
   {
+    "id": "55091e0c",
     "display_name": "Адвокатско друштво Чукий и Марков",
-    "vat_number": "4030006589236",
     "currency": "MKD",
-    "source": "user_saved",
+    "vat_number": "4030006589236",
+    "keywords": [],
     "patterns": {
+      "vendor_name": null,
       "invoice_number": "Фактура\\ 6р\\.\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
-      "total": "ВКУПЕН\\ ИЗНОС\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
-      "invoice_date": "Скопје;\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+      "invoice_date": "Скопје;\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})",
+      "total": null
     },
-    "defaults": {
-      "vendor_name": "Адвокатско друштво Чукий и Марков",
-      "komitent_name": "Advokatsko dru{tvo ^uki} i Markov",
-      "komitent_sifra": "560"
-    },
-    "id": "55091e0c"
+    "keyword_hints": {
+      "total": "ВКУПЕНИЗНОС"
+    }
   },
   {
     "display_name": "Akton Communication",
@@ -153,5 +152,230 @@
       "komitent_sifra": "111"
     },
     "id": "96cdbb4e"
+  },
+  {
+    "display_name": "Каммео Група ДООЕЛ",
+    "vat_number": "4080019586268",
+    "keywords": [
+      "Каммео Група ДООЕЛ",
+      "Kameo taksi"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "број:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "\\.\\ такси\\ услуги\\ за\\ 08/2025\\ 1\\ 1\\.00\\ 1,357\\.14\\ 0\\ 0\\.00\\ 5\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Датум\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "Каммео Група ДООЕЛ",
+      "komitent_name": "Kameo taksi",
+      "komitent_sifra": "1554"
+    },
+    "id": "bf0e9339"
+  },
+  {
+    "display_name": "СТУДИО ГЛОСА ДООЕЛ Скопје",
+    "vat_number": "4044012507234",
+    "keywords": [
+      "СТУДИО ГЛОСА ДООЕЛ Скопје",
+      "Studio Glosa"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Единствен\\ даночен\\ број\\ :\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "Вкупно:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
+    },
+    "defaults": {
+      "vendor_name": "СТУДИО ГЛОСА ДООЕЛ Скопје",
+      "komitent_name": "Studio Glosa",
+      "komitent_sifra": "1310"
+    },
+    "id": "f03c652c"
+  },
+  {
+    "display_name": "Дуна ДОО",
+    "vat_number": "4030994271696",
+    "keywords": [
+      "Дуна ДОО",
+      "Advokat Duna Turturova"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Број:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "Вкупно\\ за\\ плаќање:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Датум\\ на\\ промет:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "Дуна ДОО",
+      "komitent_name": "Advokat Duna Turturova",
+      "komitent_sifra": "1210"
+    },
+    "id": "b752c4fa"
+  },
+  {
+    "display_name": "Makedonsko kreditno biro",
+    "vat_number": "4030008054160",
+    "keywords": [
+      "Makedonsko kreditno biro",
+      "Makedonsko Kreditno biro"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Фактура\\ бр:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "Вкупен\\ износ\\ за\\ плаќање:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Датум\\ на\\ издавање:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "Makedonsko kreditno biro",
+      "komitent_name": "Makedonsko Kreditno biro",
+      "komitent_sifra": "792"
+    },
+    "id": "17548c59"
+  },
+  {
+    "display_name": "Платежна институција за издавање и 30 ноември 2025 КРЕСТОН МАКЕДОНИЈА дооел",
+    "vat_number": "4032022552493",
+    "keywords": [
+      "Платежна институција за издавање и 30 ноември 2025 КРЕСТОН МАКЕДОНИЈА дооел",
+      "Kreston Makedonija"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "ул\\.\\ СТОЛТЕНБЕРГОВА\\ бр\\.4\\ лок\\.5\\ Скопје,\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})"
+    },
+    "defaults": {
+      "vendor_name": "Платежна институција за издавање и 30 ноември 2025 КРЕСТОН МАКЕДОНИЈА дооел",
+      "komitent_name": "Kreston Makedonija",
+      "komitent_sifra": "1914"
+    },
+    "id": "353e8345"
+  },
+  {
+    "display_name": "Represent Communications",
+    "vat_number": "4080017567630",
+    "keywords": [
+      "Represent Communications",
+      "Represent Kommunikations  Dooel"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Сериски\\ број:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "стено\\ лице\\ за\\ потпис\\ на\\ фактура\\ Вкупно\\ за\\ плаќање:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Датум\\ на\\ промет:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "Represent Communications",
+      "komitent_name": "Represent Kommunikations  Dooel",
+      "komitent_sifra": "1925"
+    },
+    "id": "fb789d09"
+  },
+  {
+    "display_name": "УНИВЕЛ - Скопје",
+    "vat_number": "4030992112795",
+    "keywords": [
+      "УНИВЕЛ - Скопје",
+      "Univel"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "ФАКТУРА/ИСПРАТНИЦА\\ БР\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "За\\ наплата:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Повикување\\ на\\ број:\\ 056833\\ Датум\\ на\\ промет:\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "УНИВЕЛ - Скопје",
+      "komitent_name": "Univel",
+      "komitent_sifra": "1810"
+    },
+    "id": "d64a8957"
+  },
+  {
+    "display_name": "TELIT DOO",
+    "vat_number": "4030002441846",
+    "keywords": [
+      "TELIT DOO",
+      "Telit Doo"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "<PaKmypa\\ 6poj:\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "BKynHO\\ CE:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
+    },
+    "defaults": {
+      "vendor_name": "TELIT DOO",
+      "komitent_name": "Telit Doo",
+      "komitent_sifra": "703"
+    },
+    "id": "7da514ac"
+  },
+  {
+    "id": "01594080",
+    "display_name": "СТЈУАРТ ИНСПЕКТ дооел",
+    "currency": "MKD",
+    "vat_number": "4030990160024",
+    "keywords": [
+      "СТЈУАРТ ИНСПЕКТ дооел",
+      "Stjuart Inspekt"
+    ],
+    "patterns": {
+      "vendor_name": null,
+      "invoice_number": "\\.\\ 1732\\ бр\\.4\\ лок\\.5\\ \\(ул\\.\\ Столтенбергова\\ бр\\.\\ 4\\)\\-\\ Број\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "invoice_date": null,
+      "total": ":\\ 30\\ дена,\\ до\\ 14\\.Моу\\.2025\\ Вкупно\\ заЈјаплатаденари:\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)"
+    },
+    "keyword_hints": {
+      "invoice_date": "Датум:"
+    }
+  },
+  {
+    "display_name": "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+    "vat_number": "4030008054658",
+    "keywords": [
+      "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+      "Zonel"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "Арх\\.\\ Број;\\ 0504\\-\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "одржување\\ за\\ период\\ 1\\.0\\ 6,000\\.00\\ 6,000\\.00\\ 1,080\\.00\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "Датум\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "ЗОНЕЛ Софтвер ДООЕЛ Скопје",
+      "komitent_name": "Zonel",
+      "komitent_sifra": "111"
+    },
+    "id": "372cdd08"
+  },
+  {
+    "display_name": "МАКЕДОНСКИ ТЕЛЕКОМ АД - СКОПЈЕ Страна Страна 1 од 2",
+    "vat_number": "4030997339640",
+    "keywords": [
+      "МАКЕДОНСКИ ТЕЛЕКОМ АД - СКОПЈЕ Страна Страна 1 од 2",
+      "Makedonski telekomunikacii"
+    ],
+    "currency": "MKD",
+    "source": "user_saved",
+    "patterns": {
+      "invoice_number": "13\\-ти\\ Ноември\"\\ број\\ 6,\\ 1000\\ Скопје\\ Број\\ на\\ фактура\\s*[:\\-]?\\s*([A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9][A-Za-zА-Яа-яЃ-ЏЀ-ӿ0-9/\\-\\.]{1,30})",
+      "total": "Вкупно\\ за\\ плаќање\\ \\(во\\ денари\\)\\s*[:\\-]?\\s*(?:MKD|MKД|ден\\.?)?\\s*([\\d.,]+)",
+      "invoice_date": "ЕРС\\ КЛУБ\\ ИНТЕРНАЦИОНАЛ\\ МАК\\ ДООЕЛ\\ Датум\\ на\\ издавање\\s*[:\\-]?\\s*(\\d{1,2}[./\\-]\\d{1,2}[./\\-]\\d{2,4})"
+    },
+    "defaults": {
+      "vendor_name": "МАКЕДОНСКИ ТЕЛЕКОМ АД - СКОПЈЕ Страна Страна 1 од 2",
+      "komitent_name": "Makedonski telekomunikacii",
+      "komitent_sifra": "001"
+    },
+    "id": "8ed2887c"
   }
 ]

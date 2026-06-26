@@ -116,7 +116,7 @@ class InvoicePipeline:
             self._emit("Extracting invoice fields...", 60)
             if template:
                 result.template_used = template["id"]
-                extracted = apply_template(template, full_text, lines)
+                extracted = apply_template(template, full_text, structured_lines)
             else:
                 extracted = extract_from_text(ocr_result, file_path=str(file_path))
 

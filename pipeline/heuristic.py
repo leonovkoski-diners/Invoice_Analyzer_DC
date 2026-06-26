@@ -31,6 +31,9 @@ def parse_amount(text: str) -> Optional[Decimal]:
     if not text:
         return None
     text = str(text).strip().replace("\xa0", "").replace(" ", "")
+    # Normalize OCR confusable characters that appear inside numeric strings
+    # Ѕ/ѕ (Cyrillic Dze, U+0455/0405) looks identical to 5 in many fonts
+    text = text.replace('Ѕ', '5').replace('ѕ', '5')
     # "d+,ddd" — comma followed by exactly 3 digits, no further separators:
     # treat as a comma-thousands separator (93,548 = 93548), not as a decimal.
     # Must come before the European format check which would parse it as 93.548.
@@ -578,7 +581,7 @@ _TOTAL_SPECIFIC_PAT = re.compile(
 )
 # Generic total labels: Вкупно, Total — only used as last resort
 _TOTAL_GENERIC_PAT = re.compile(
-    r"(?:Вкупно|Ukupno|Total|ВКУПНО)" + _H + r"[:\-]?" + _H + r"([\d.,]+)",
+    r"(?:Вкуп[нм]о?|Ukupno|Total)" + _H + r"[:\-]?" + _H + r"([\d.,]+)",
     re.IGNORECASE,
 )
 # Used for cross-line search: find lines containing these specific labels
@@ -807,7 +810,7 @@ def extract_financial_totals(full_text: str, lines: List[str] = None) -> Dict[st
 
 # Lines that signal the start of the TOTALS SECTION (end of TABLE SECTION).
 _TABLE_END_RE = re.compile(
-    r'^\s*(?:вкупн|основиц|даночна\s+основа|ддв|за\s+наплата|вкупен\s+износ)',
+    r'^\s*(?:вкуп[нм]|основиц|даночна\s*основа|д[дц]в|за\s+наплата|вкупен\s+износ)',
     re.IGNORECASE,
 )
 
@@ -879,9 +882,142 @@ def structure_ocr_text(lines: List[str]) -> List[str]:
     return out
 
 
-def extract_line_items(total: Optional[Decimal]) -> List[Dict]:
-    """Single synthetic line item from the invoice total."""
+def _try_parse_stavka_line(line: str) -> Optional[Tuple[str, Decimal]]:
+    """
+    Parse one item row from the СТАВКИ section into (description, amount).
+
+    Within the section any non-blank line is a candidate — the leading row
+    identifier may be OCR-mangled ($, «3, и, '2, 1?, etc.) so we no longer
+    require a clean digit prefix.  A line is accepted if its last 1–2 tokens
+    parse as a positive amount.
+    """
+    line = line.strip()
+    if not line or line.startswith('---'):
+        return None
+    parts = line.split()
+    if len(parts) < 2:
+        return None
+    for n in (1, 2):
+        amt_str = ''.join(parts[-n:])
+        amount = parse_amount(amt_str)
+        if amount is not None and amount > 0:
+            description = ' '.join(parts[:-n]).strip()
+            if description:
+                return description, amount
+    return None
+
+
+def _extract_stavki_from_section(lines: List[str]) -> Optional[List[Dict]]:
+    """
+    Extract raw item rows from the СТАВКИ section (between the markers
+    inserted by structure_ocr_text).  Returns None when the markers are
+    absent or no valid rows are found.
+    """
+    start = next((i for i, l in enumerate(lines) if l.strip() == '--- СТАВКИ ---'), None)
+    if start is None:
+        return None
+
+    end = next(
+        (i for i, l in enumerate(lines)
+         if i > start and l.strip() in ('--- ВКУПНО ---', '--- КРАЈ ---')),
+        None,
+    )
+    section = lines[start + 1:end] if end else lines[start + 1:]
+
+    items = []
+    for line in section:
+        parsed = _try_parse_stavka_line(line)
+        if parsed:
+            description, amount = parsed
+            items.append({'description': description, 'amount': amount})
+
+    return items if items else None
+
+
+def extract_line_items(
+    lines: List[str],
+    total: Optional[Decimal],
+    subtotal: Optional[Decimal] = None,
+    tax_rate: Optional[Decimal] = None,
+) -> List[Dict]:
+    """
+    Try to extract real line items from the СТАВКИ section.
+
+    Validates that the sum of extracted amounts equals either the gross total
+    (amounts are already gross) or the net subtotal (amounts are net, VAT
+    rate is then applied by the journal).  Falls back to a single synthetic
+    item when extraction fails or the sum doesn't validate.
+    """
     gross = total or Decimal('0')
+
+    raw_items = _extract_stavki_from_section(lines)
+
+    if raw_items:
+        item_sum = sum(it['amount'] for it in raw_items)
+        tol_gross = max(gross * Decimal('0.02'), Decimal('1')) if gross > 0 else Decimal('1')
+        tol_net = max(subtotal * Decimal('0.02'), Decimal('1')) if subtotal and subtotal > 0 else Decimal('1')
+
+        def _sums_ok(items):
+            s = sum(it['amount'] for it in items)
+            g_ok = gross > 0 and abs(s - gross) <= tol_gross
+            n_ok = bool(subtotal and subtotal > 0 and abs(s - subtotal) <= tol_net)
+            return g_ok, n_ok, s
+
+        gross_ok, net_ok, item_sum = _sums_ok(raw_items)
+
+        # OCR decimal-drop recovery: one amount may be ×100 too large because
+        # the decimal point was dropped (e.g. "48122" instead of "481.22").
+        # Try correcting each item by ÷100 until exactly one fix makes the sum validate.
+        if not gross_ok and not net_ok:
+            for i, item in enumerate(raw_items):
+                if item['amount'] >= Decimal('100'):
+                    corrected = (item['amount'] / Decimal('100')).quantize(Decimal('0.01'))
+                    candidate = list(raw_items)
+                    candidate[i] = dict(item, amount=corrected)
+                    cg, cn, cs = _sums_ok(candidate)
+                    if cg or cn:
+                        logger.info(
+                            "OCR decimal-drop fix item %d: %s → %s",
+                            i, item['amount'], corrected,
+                        )
+                        raw_items = candidate
+                        gross_ok, net_ok, item_sum = cg, cn, cs
+                        break
+
+        if gross_ok:
+            vat_rate_to_use = None
+            logger.info("Stavki extracted: %d items summing to %s (gross match)", len(raw_items), item_sum)
+        elif net_ok:
+            # Items are NET. Derive implied VAT rate from gross/subtotal ratio
+            # so the journal grosses up each line correctly — even when extract_financial_totals
+            # didn't find an explicit tax_rate.
+            if tax_rate:
+                vat_rate_to_use = tax_rate
+            elif gross > subtotal:
+                vat_rate_to_use = ((gross / subtotal - 1) * 100).quantize(Decimal('0.1'))
+            else:
+                vat_rate_to_use = None
+            logger.info("Stavki extracted: %d items summing to %s (net match, rate=%s)", len(raw_items), item_sum, vat_rate_to_use)
+        else:
+            logger.info(
+                "Stavki sum %s matches neither total %s nor subtotal %s — using synthetic item",
+                item_sum, gross, subtotal,
+            )
+            raw_items = None
+
+        if raw_items:
+            return [
+                {
+                    'description': it['description'],
+                    'quantity': Decimal('1'),
+                    'unit_price': it['amount'],
+                    'line_total': it['amount'],
+                    'vat_rate': vat_rate_to_use,
+                }
+                for it in raw_items
+            ]
+
+    # Fallback: single synthetic item
     return [{
         'description': 'Услуги / Services',
         'quantity': Decimal('1'),
@@ -932,13 +1068,17 @@ def extract_from_text(ocr_result: dict, file_path: Optional[str] = None) -> Dict
         logger.warning("invoice_date extraction failed: %s", exc)
 
     total = Decimal("0")
+    subtotal: Optional[Decimal] = None
+    tax_rate: Optional[Decimal] = None
     try:
         financials = extract_financial_totals(full_text, lines)
-        total = financials.get("total") or Decimal("0")
+        total    = financials.get("total") or Decimal("0")
+        subtotal = financials.get("subtotal")
+        tax_rate = financials.get("tax_rate")
     except Exception as exc:
         logger.warning("financial totals extraction failed: %s", exc)
 
-    line_items = extract_line_items(total if total > 0 else None)
+    line_items = extract_line_items(lines, total if total > 0 else None, subtotal, tax_rate)
 
     # Komitent lookup
     # Pass 1: fuzzy-match the extracted vendor name against the registry (fast path).
